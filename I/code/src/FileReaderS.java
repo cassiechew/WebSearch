@@ -7,6 +7,8 @@
 import java.io.*;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import util.Document;
 import util.SkipTags;
@@ -20,6 +22,11 @@ public class FileReaderS {
 
     /** The current data file being used */
     private File currentFile;
+
+    /** Stoplist to compare to for word removal */
+    private String stoplist;
+
+    private Map<Integer, String> stoplistHashtable;
 
     /** The data map to write to the out file */
     private Map<UUID, String> dataMap;
@@ -78,7 +85,8 @@ public class FileReaderS {
                 /* This checks if the document has ended and will generate a document object */
                 if (buffer.equals(SwitchTags.CLOSEDOC.getText())) {
                     documentArrayList.add(generateDocument(
-                            documentNo.toString(), header.toString(), textData.toString()
+                            documentNo.toString(), header.toString(),
+                            stoppingFunction(textData).replaceAll("(?<!\\S)-|-(?!\\S)", "")
                     ));
                     documentNo = new StringBuilder();
                     header = new StringBuilder();
@@ -122,7 +130,10 @@ public class FileReaderS {
                         continue;
                     }
 
-                    textData.append(buffer.replaceAll("\\p{Punct}", "").toLowerCase());
+                //"((?<!\\w)-(?!\\w))|\\p{Punct}",
+
+                    textData.append(buffer.replaceAll("[^a-zA-Z0-9_.-]|(?<!\\d)\\.(?!\\d)|(?<!\\w)-(?!\\w)"," ")
+                            .toLowerCase().replaceAll("\\s+", " "));
                 }
 
 
@@ -138,6 +149,60 @@ public class FileReaderS {
 
         writeOutFile();
         return documentArrayList;
+
+    }
+
+    public void scanStopList (String stoplist) {
+
+        File stoplistFile = new File (stoplist);
+        StringBuilder stringBuilder = new StringBuilder();
+
+        this.stoplistHashtable = new Hashtable<>();
+
+        stringBuilder.append("\\b(");
+
+
+        try {
+            FileReader fileReader = new FileReader(stoplistFile);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+
+            String buffer;
+
+            while ((buffer = bufferedReader.readLine()) != null) {
+                stringBuilder.append(buffer + "|");
+                hashString(buffer);
+            }
+
+            stringBuilder.deleteCharAt(stringBuilder.length()-1);
+            stringBuilder.append(")\\b\\s?");
+
+
+            this.stoplist = stringBuilder.toString();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+
+    public void hashString (String s) {
+
+        this.stoplistHashtable.put(s.hashCode(), s);
+
+    }
+
+
+
+    private String stoppingFunction (StringBuilder textData) {
+
+        Pattern p = Pattern.compile(stoplist);
+        Matcher m = p.matcher(textData.toString());
+        String s = m.replaceAll("");
+
+        return s;
+
 
     }
 
@@ -157,6 +222,9 @@ public class FileReaderS {
     }
 
 
+    /**
+     * Writes the mapping data to an out file
+     */
     private void writeOutFile () {
 
         try {

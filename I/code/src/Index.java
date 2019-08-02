@@ -7,6 +7,8 @@ public class Index {
     public static final int FAILURE = 1;
 
     public static boolean verbose = false;
+    public static boolean hasStoplist = false;
+
     private static int argslength = 0;
 
 
@@ -28,7 +30,40 @@ public class Index {
                     argslength = 2;
                 } else {
                     System.out.println(
-                            "Failed: correct usage\n\n    ./Index [-p] <sourcefile>"
+                            "Failed: correct usage\n\n    ./index [-s <stoplist>] [-p] <sourcefile>"
+                    );
+                    System.exit(FAILURE);
+                }
+                break;
+            case 3:
+                if (args[0].equals("-s") && !args[1].equals("-p")) {
+                    hasStoplist = true;
+                    argslength = 3;
+                } else {
+                    System.out.println(
+                            "Failed: correct usage\n\n    ./index [-s <stoplist>] [-p] <sourcefile>"
+                    );
+                    System.exit(FAILURE);
+                }
+                break;
+
+            case 4:
+                if (args[0].equals("-s") && !args[1].equals("-p")) {
+                    hasStoplist = true;
+                    argslength = 4;
+
+                    if (args[2].equals("-p")) {
+                        verbose = true;
+                    } else {
+                        System.out.println(
+                                "Failed: correct usage\n\n    ./index [-s <stoplist>] [-p] <sourcefile>"
+                        );
+                        System.exit(FAILURE);
+                    }
+
+                } else {
+                    System.out.println(
+                            "Failed: correct usage\n\n    ./index [-s <stoplist>] [-p] <sourcefile>"
                     );
                     System.exit(FAILURE);
                 }
@@ -36,13 +71,16 @@ public class Index {
 
             default:
                 System.out.println(
-                        "Failed: correct usage\n\n    ./Index [-p] <sourcefile>"
+                        "Failed: correct usage\n\n    ./index [-s <stoplist>] [-p] <sourcefile>"
                 );
                 System.exit(FAILURE);
         }
 
 
         FRS.setCurrentFile(args[argslength - 1]);
+        if (hasStoplist) {
+            FRS.scanStopList(args[1]);
+        }
         parsedData = FRS.readFile();
         if (verbose) {
             printAllDocs();
