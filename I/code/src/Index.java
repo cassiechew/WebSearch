@@ -87,7 +87,7 @@ public class Index {
                  ) {
                 d.printDoc();
             }
-        };
+        }
 
     }
 

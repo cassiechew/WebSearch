@@ -29,7 +29,9 @@ public class FileReaderS {
     private Map<Integer, String> stoplistHashtable;
 
     /** The data map to write to the out file */
-    private Map<UUID, String> dataMap;
+    private Map<Integer, String> dataMap;
+
+    private int currentDocumentCount;
 
 
     public void setCurrentFile(String fileName) {
@@ -49,7 +51,9 @@ public class FileReaderS {
 
     }
 
-    private FileReaderS() {}
+    private FileReaderS() {
+        currentDocumentCount = 0;
+    }
 
 
     /**
@@ -85,8 +89,8 @@ public class FileReaderS {
                 /* This checks if the document has ended and will generate a document object */
                 if (buffer.equals(SwitchTags.CLOSEDOC.getText())) {
                     documentArrayList.add(generateDocument(
-                            documentNo.toString(), header.toString(),
-                            stoppingFunction(textData).replaceAll("(?<!\\S)-|-(?!\\S)", "").replaceAll("\\s+", " ")));
+                            documentNo.toString(), stoppingFunction(header).replaceAll("\\s+", " "),
+                            stoppingFunction(textData).replaceAll("\\s+", " ")));
                     documentNo = new StringBuilder();
                     header = new StringBuilder();
                     textData = new StringBuilder();
@@ -118,7 +122,8 @@ public class FileReaderS {
                             buffer.equals(SkipTags.TEXT.getText()) || buffer.equals(SkipTags.HEADLINE.getText())) {
                         continue;
                     }
-                    header.append(buffer);
+                    header.append(buffer.replaceAll("(?<!\\S)\\p{Punct}+|\\p{Punct}+(?!\\S)", " ")
+                            .toLowerCase());
                 }
 
                 /* This reads the text content of the current document */
@@ -227,7 +232,8 @@ public class FileReaderS {
 
         }
 
-        return String.join(" ", textArray).replaceAll("\\s+", " ");
+        return String.join(" ", textArray).replaceAll("\\s+", " ")
+                .replaceAll("^\\s+|$\\s+", "");
         /*
         Pattern p = Pattern.compile(stoplist);
         Matcher m = p.matcher(textData.toString());
@@ -247,10 +253,11 @@ public class FileReaderS {
      */
     private Document generateDocument (String documentNo, String heading, String textData) {
 
-        UUID uuid = UUID.randomUUID();
-        dataMap.put(uuid, documentNo);
+        int id = currentDocumentCount;
+        currentDocumentCount++;
+        dataMap.put(id, documentNo);
 
-        return new Document(documentNo, uuid, heading, textData);
+        return new Document(documentNo, id, heading, textData);
     }
 
 
@@ -270,7 +277,7 @@ public class FileReaderS {
             FileWriter fw = new FileWriter(outfile);
             PrintWriter pw = new PrintWriter(fw);
 
-            for (Map.Entry<UUID, String> entry : dataMap.entrySet()) {
+            for (Map.Entry<Integer, String> entry : dataMap.entrySet()) {
                 pw.print(entry.getKey() + " " + entry.getValue() + "\n");
             }
 

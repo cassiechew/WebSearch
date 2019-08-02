@@ -7,12 +7,12 @@ public class Document {
     /** DOCNO */
     private String documentNo;
     /** Unique Identifier */
-    private UUID documentID;
+    private int documentID;
 
     private String headline;
     private String textData;
 
-    public Document (String documentNo, UUID documentID, String headline, String textData) {
+    public Document (String documentNo, int documentID, String headline, String textData) {
         super();
         this.documentNo = documentNo;
         this.documentID = documentID;
@@ -25,7 +25,7 @@ public class Document {
         return documentNo;
     }
 
-    public UUID getDocumentID() {
+    public int getDocumentID() {
         return documentID;
     }
 
