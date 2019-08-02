@@ -152,6 +152,11 @@ public class FileReaderS {
 
     }
 
+
+    /**
+     * Scans the list of the inputted stop word list and builds the regex expression/hashtable for function usage
+     * @param stoplist
+     */
     public void scanStopList (String stoplist) {
 
         File stoplistFile = new File (stoplist);
@@ -160,7 +165,6 @@ public class FileReaderS {
         this.stoplistHashtable = new Hashtable<>();
 
         stringBuilder.append("\\b(");
-
 
         try {
             FileReader fileReader = new FileReader(stoplistFile);
@@ -187,6 +191,10 @@ public class FileReaderS {
     }
 
 
+    /**
+     * A hashing function for strings
+     * @param s
+     */
     public void hashString (String s) {
 
         this.stoplistHashtable.put(s.hashCode(), s);
@@ -194,7 +202,11 @@ public class FileReaderS {
     }
 
 
-
+    /**
+     * Removes all the stop words from the provided text
+     * @param textData
+     * @return
+     */
     private String stoppingFunction (StringBuilder textData) {
 
         Pattern p = Pattern.compile(stoplist);
