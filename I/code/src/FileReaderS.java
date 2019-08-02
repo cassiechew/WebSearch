@@ -86,8 +86,7 @@ public class FileReaderS {
                 if (buffer.equals(SwitchTags.CLOSEDOC.getText())) {
                     documentArrayList.add(generateDocument(
                             documentNo.toString(), header.toString(),
-                            stoppingFunction(textData).replaceAll("(?<!\\S)-|-(?!\\S)", "")
-                    ));
+                            stoppingFunction(textData).replaceAll("(?<!\\S)-|-(?!\\S)", "").replaceAll("\\s+", " ")));
                     documentNo = new StringBuilder();
                     header = new StringBuilder();
                     textData = new StringBuilder();
@@ -130,10 +129,13 @@ public class FileReaderS {
                         continue;
                     }
 
-                //"((?<!\\w)-(?!\\w))|\\p{Punct}",
+                //"((?<!\\w)-(?!\\w))|\\p{Punct}",[^A-Za-z0-9\s]
 
-                    textData.append(buffer.replaceAll("[^a-zA-Z0-9_.-]|(?<!\\d)\\.(?!\\d)|(?<!\\w)-(?!\\w)"," ")
-                            .toLowerCase().replaceAll("\\s+", " "));
+                    //textData.append(buffer.replaceAll("[^a-zA-Z0-9_.-]|(?<!\\S)-|-(?!\\S)|(?<!\\d)\\.|\\.(?!\\d)"," ")
+                      //      .toLowerCase());
+
+                    textData.append(buffer.replaceAll("(?<!\\S)\\p{Punct}+|\\p{Punct}+(?!\\S)", " ")
+                            .toLowerCase());
                 }
 
 
@@ -154,17 +156,19 @@ public class FileReaderS {
 
 
     /**
-     * Scans the list of the inputted stop word list and builds the regex expression/hashtable for function usage
+     * Scans the list of the inputted stop word list and builds the Hashtable for function usage
      * @param stoplist
      */
     public void scanStopList (String stoplist) {
 
         File stoplistFile = new File (stoplist);
-        StringBuilder stringBuilder = new StringBuilder();
+        //StringBuilder stringBuilder = new StringBuilder();
+
+        //String temp;
 
         this.stoplistHashtable = new Hashtable<>();
 
-        stringBuilder.append("\\b(");
+        //stringBuilder.append("(?<=\\s+)\\b(");
 
         try {
             FileReader fileReader = new FileReader(stoplistFile);
@@ -173,15 +177,16 @@ public class FileReaderS {
             String buffer;
 
             while ((buffer = bufferedReader.readLine()) != null) {
-                stringBuilder.append(buffer + "|");
+                //stringBuilder.append(buffer + "|");
                 hashString(buffer);
             }
 
-            stringBuilder.deleteCharAt(stringBuilder.length()-1);
-            stringBuilder.append(")\\b\\s?");
+            //stringBuilder.deleteCharAt(stringBuilder.length()-1);
+            //stringBuilder.append(")\\b(?=\\s+)");
 
 
-            this.stoplist = stringBuilder.toString();
+
+            //this.stoplist = stringBuilder.toString();
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -209,12 +214,27 @@ public class FileReaderS {
      */
     private String stoppingFunction (StringBuilder textData) {
 
+
+        String[] textArray = textData.toString().split(" ");
+
+        for (int i = 0; i < textArray.length; i++) {
+
+            int hash = textArray[i].hashCode();
+
+            if (this.stoplistHashtable.containsKey(hash)) {
+                textArray[i] = "";
+            }
+
+        }
+
+        return String.join(" ", textArray).replaceAll("\\s+", " ");
+        /*
         Pattern p = Pattern.compile(stoplist);
         Matcher m = p.matcher(textData.toString());
-        String s = m.replaceAll("");
+        String s = m.replaceAll(" ");
 
         return s;
-
+    */
 
     }
 

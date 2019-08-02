@@ -36,4 +36,13 @@ public class Document {
     public String getTextData() {
         return textData;
     }
+
+
+    public void printDoc () {
+        System.out.println(documentID);
+        System.out.println(documentNo);
+        System.out.println(headline);
+        System.out.println(textData);
+        System.out.println();
+    }
 }

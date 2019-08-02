@@ -83,17 +83,14 @@ public class Index {
         }
         parsedData = FRS.readFile();
         if (verbose) {
-            printAllDocs();
+            for (Document d : parsedData
+                 ) {
+                d.printDoc();
+            }
         };
 
     }
 
-    public static void printDoc (int index) {
-        System.out.println(parsedData.get(index).getDocumentID());
-        System.out.println(parsedData.get(index).getDocumentNo());
-        System.out.println(parsedData.get(index).getHeadline());
-        System.out.println(parsedData.get(index).getTextData());
-    }
 
     private static void printAllDocs () {
         for (Document d : parsedData
