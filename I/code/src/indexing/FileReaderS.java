@@ -1,4 +1,4 @@
-/**
+package indexing; /**
  * This is a class that handles file IO.
  */
 
@@ -7,10 +7,9 @@
 import java.io.*;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import util.Document;
+import util.DocumentFactory;
 import util.SkipTags;
 import util.SwitchTags;
 
@@ -18,18 +17,19 @@ import util.SwitchTags;
 public class FileReaderS {
 
 
-    private static FileReaderS fileReaderS = null;
-
     /** The current data file being used */
     private File currentFile;
 
+    @Deprecated
     /** Stoplist to compare to for word removal */
     private String stoplist;
 
     private Map<Integer, String> stoplistHashtable;
 
     /** The data map to write to the out file */
-    private Map<Integer, String> dataMap;
+    private Map<Integer, Document> dataMap;
+
+    private DocumentFactory documentFactory;
 
     private int currentDocumentCount;
 
@@ -38,20 +38,12 @@ public class FileReaderS {
         currentFile = new File(fileName);
     }
 
-    /**
-     * Singleton pattern implemented to ensure file safety
-     * @return this object
-     */
-    public static FileReaderS getFileReaderS() {
-        if (fileReaderS == null) {
-            fileReaderS = new FileReaderS();
-
-        }
-        return fileReaderS;
-
+    public void setDocumentFactory (DocumentFactory documentFactory) {
+        this.documentFactory = documentFactory;
     }
 
-    private FileReaderS() {
+
+    public FileReaderS() {
         currentDocumentCount = 0;
     }
 
@@ -88,9 +80,16 @@ public class FileReaderS {
 
                 /* This checks if the document has ended and will generate a document object */
                 if (buffer.equals(SwitchTags.CLOSEDOC.getText())) {
-                    documentArrayList.add(generateDocument(
-                            documentNo.toString(), stoppingFunction(header).replaceAll("\\s+", " "),
+                    documentArrayList.add(this.documentFactory.createDocument(
+                            documentNo.toString(),
+                            stoppingFunction(header).replaceAll("\\s+", " "),
                             stoppingFunction(textData).replaceAll("\\s+", " ")));
+
+
+
+                            /*generateDocument(
+                            documentNo.toString(), stoppingFunction(header).replaceAll("\\s+", " "),
+                            stoppingFunction(textData).replaceAll("\\s+", " ")));*/
                     documentNo = new StringBuilder();
                     header = new StringBuilder();
                     textData = new StringBuilder();
@@ -244,8 +243,10 @@ public class FileReaderS {
 
     }
 
+    @Deprecated
     /**
      * Used to create a document
+     *
      * @param documentNo The number of the document
      * @param heading The heading of the document
      * @param textData The content data of the document
@@ -254,10 +255,11 @@ public class FileReaderS {
     private Document generateDocument (String documentNo, String heading, String textData) {
 
         int id = currentDocumentCount;
+        Document document = new Document(documentNo, id, heading, textData, new DocumentFactory(null));
         currentDocumentCount++;
-        dataMap.put(id, documentNo);
+        dataMap.put(id, document);
 
-        return new Document(documentNo, id, heading, textData);
+        return document;
     }
 
 
@@ -277,8 +279,8 @@ public class FileReaderS {
             FileWriter fw = new FileWriter(outfile);
             PrintWriter pw = new PrintWriter(fw);
 
-            for (Map.Entry<Integer, String> entry : dataMap.entrySet()) {
-                pw.print(entry.getKey() + " " + entry.getValue() + "\n");
+            for (Map.Entry<Integer, Document> entry : dataMap.entrySet()) {
+                pw.print(entry.getKey() + " " + entry.getValue().getDocumentNo() + "\n");
             }
 
             pw.flush();

@@ -1,3 +1,5 @@
+package indexing;
+
 import util.Document;
 
 import java.io.File;
@@ -44,9 +46,14 @@ public class InvIndexGenerator {
         for (Document d : documentList
              ) {
 
+            mapLexiconData(d.getDocumentID(), d.getHeadline().split(" "));
+            mapLexiconData(d.getDocumentID(), d.getTextData().split(" "));
+
+        }
+
             //store document number, frequency it appears here
 
-
+            /*
             for (String s : d.getHeadline().split(" ")) {
                 if (!lexiconInvlist.containsKey(s)) {
                     lexiconInvlist.put(s, new HashMap<>(d.getDocumentID(), 1));
@@ -72,6 +79,24 @@ public class InvIndexGenerator {
                     else {
                         lexiconInvlist.get(s).put(d.getDocumentID(), 1);
                     }
+                }
+            }
+        } */
+
+    }
+
+    public void mapLexiconData (int documentID, String[] textData) {
+
+        for (String s : textData) {
+            if (!lexiconInvlist.containsKey(s)) {
+                lexiconInvlist.put(s, new HashMap<>(documentID, 1));
+            }
+            else {
+                if (lexiconInvlist.get(s).containsKey(documentID)) {
+                    lexiconInvlist.get(s).replace(documentID, lexiconInvlist.get(s).get(documentID));
+                }
+                else {
+                    lexiconInvlist.get(s).put(documentID, 1);
                 }
             }
         }

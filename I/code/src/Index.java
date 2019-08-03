@@ -1,22 +1,28 @@
+import indexing.FileReaderS;
 import util.Document;
+import util.DocumentFactory;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Index {
 
-    public static final int FAILURE = 1;
+    private static final int FAILURE = 1;
 
-    public static boolean verbose = false;
-    public static boolean hasStoplist = false;
+    private static boolean verbose = false;
+    private static boolean hasStoplist = false;
 
     private static int argslength = 0;
 
-
     private static List<Document> parsedData;
+    private static Map<Integer, Document> documentMap;
 
     public static void main (String[] args) {
 
-        FileReaderS FRS = FileReaderS.getFileReaderS();
+        FileReaderS fileReaderS = new FileReaderS();
+        documentMap = new HashMap<>();
+        DocumentFactory documentFactory = new DocumentFactory(documentMap);
 
         switch (args.length) {
 
@@ -77,11 +83,13 @@ public class Index {
         }
 
 
-        FRS.setCurrentFile(args[argslength - 1]);
+        fileReaderS.setDocumentFactory(documentFactory);
+
+        fileReaderS.setCurrentFile(args[argslength - 1]);
         if (hasStoplist) {
-            FRS.scanStopList(args[1]);
+            fileReaderS.scanStopList(args[1]);
         }
-        parsedData = FRS.readFile();
+        parsedData = fileReaderS.readFile();
         if (verbose) {
             for (Document d : parsedData
                  ) {

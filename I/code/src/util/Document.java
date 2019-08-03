@@ -12,12 +12,14 @@ public class Document {
     private String headline;
     private String textData;
 
-    public Document (String documentNo, int documentID, String headline, String textData) {
+
+    public Document (String documentNo, int documentID, String headline, String textData, DocumentFactory documentFactory) {
         super();
         this.documentNo = documentNo;
         this.documentID = documentID;
         this.headline = headline;
         this.textData = textData;
+        documentFactory.registerDocument(documentID, this);
     }
 
 
