@@ -1,18 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d76fdc18-1e48-4e52-ad98-688a0b8fd667" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/assignment1/lexicon" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/assignment1/map" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Index.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Index.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/indexing/DocumentHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/indexing/DocumentHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/indexing/InvIndexGenerator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/indexing/InvIndexGenerator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/util/Document.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/util/Document.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/util/DocumentFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/util/DocumentFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../latimes-100" beforeDir="false" />
-    </list>
+    <list default="true" id="d76fdc18-1e48-4e52-ad98-688a0b8fd667" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -157,12 +146,15 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
   </component>
+<<<<<<< Updated upstream
   <component name="ProjectFrameBounds">
     <option name="y" value="23" />
     <option name="width" value="1680" />
     <option name="height" value="1027" />
   </component>
 <<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
   <component name="ProjectId" id="1OxuXtuuJUzLvdPA4ddmmRoIn1J" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="PropertiesComponent">
