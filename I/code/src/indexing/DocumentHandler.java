@@ -21,6 +21,7 @@ public class DocumentHandler {
     /** The current data file being used */
     private File currentFile;
 
+    private boolean hasStopFile;
 
 
     @Deprecated
@@ -47,6 +48,7 @@ public class DocumentHandler {
 
     public DocumentHandler() {
         currentDocumentCount = 0;
+        hasStopFile = false;
     }
 
 
@@ -84,8 +86,8 @@ public class DocumentHandler {
                 if (buffer.equals(SwitchTags.CLOSEDOC.getText())) {
                     documentArrayList.add(this.documentFactory.createDocument(
                             documentNo.toString(),
-                            stoppingFunction(header),
-                            stoppingFunction(textData)));
+                            (hasStopFile) ? stoppingFunction(header) : header.toString(),
+                            (hasStopFile) ? stoppingFunction(textData) : textData.toString()));
                     documentNo.setLength(0);
                     header.setLength(0);
                     textData.setLength(0);
@@ -176,6 +178,7 @@ public class DocumentHandler {
         FileReader fileReader = null;
         BufferedReader bufferedReader = null;
 
+        this.hasStopFile = true;
         this.stoplistHashtable = new Hashtable<>();
 
         try {

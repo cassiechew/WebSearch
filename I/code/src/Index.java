@@ -25,6 +25,9 @@ public class Index {
     private static List<Document> parsedData;
     private static Map<Integer, Document> documentMap;
 
+    private static String currentFile  = null;
+    private static String stopfile     = null;
+
     public static void main (String[] args) {
 
 
@@ -32,14 +35,77 @@ public class Index {
         DocumentFactory documentFactory;
         InvIndexGenerator invIndexGenerator;
 
-        String currentFile  = null;
-        String stopfile     = null;
+        documentMap = new HashMap<>();
+        documentFactory = new DocumentFactory(documentMap);
+
+        opsHandler(args);
+
+
+        final long start = (timed) ? System.currentTimeMillis() : 0;
+
+        System.out.println("Initializing factories and files...");
+        documentHandler.setDocumentFactory(documentFactory);
+        documentHandler.setCurrentFile(currentFile);
+
+        if (hasStoplist) {
+            documentHandler.scanStopList(stopfile);
+        }
+
+        System.out.println("Parsing document data...");
+        parsedData = documentHandler.readFile();
+        System.out.println("Parsing complete!");
+
+        System.out.println("Initializing index generator...");
+        invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME, MAPFILENAME);
+
+        System.out.println("Indexing data...");
+        invIndexGenerator.createList(parsedData);
+        System.out.println("Indexing complete!");
+
+        System.out.println("Writing indexed data to file...");
+        invIndexGenerator.writeOutfileData();
+        System.out.println("Writing complete!");
+
+        if (verbose) {
+            for (Document d : parsedData
+                 ) {
+                d.printDoc();
+            }
+        }
+
+        if (timed) {
+            final long end = System.currentTimeMillis();
+            System.out.println("Total excecution time: " + (end - start));
+        }
+
+        System.out.println("Inverted index completed!");
+
+    }
+
+    /**
+     * Prints all document information
+     */
+    @Deprecated
+    private static void printAllDocs () {
+        for (Document d : parsedData
+                ) {
+            System.out.println(parsedData.get(parsedData.indexOf(d)).getDocumentID());
+            System.out.println(parsedData.get(parsedData.indexOf(d)).getDocumentNo());
+            System.out.println(parsedData.get(parsedData.indexOf(d)).getHeadline());
+            System.out.println(parsedData.get(parsedData.indexOf(d)).getTextData());
+            System.out.println();
+        }
+    }
+
+
+    /**
+     * A simple handler for CLI options management
+     * @param args The cli options
+     */
+    private static void opsHandler (String[] args) {
 
         boolean[] opsArray  = new boolean[args.length];
         int opsCount        = 0;
-
-        documentMap = new HashMap<>();
-        documentFactory = new DocumentFactory(documentMap);
 
         for (int i = 0; i < args.length; i++) {
 
@@ -89,52 +155,6 @@ public class Index {
 
         if (opsCount != opsArray.length) {
             System.exit(FAILURE);
-        }
-
-
-
-        final long start = (timed) ? System.currentTimeMillis() : 0;
-
-
-        documentHandler.setDocumentFactory(documentFactory);
-        documentHandler.setCurrentFile(currentFile);
-
-        if (hasStoplist) {
-            documentHandler.scanStopList(stopfile);
-        }
-
-        parsedData = documentHandler.readFile();
-
-        invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME, MAPFILENAME);
-        invIndexGenerator.createList(parsedData);
-        invIndexGenerator.writeOutfileData();
-
-        if (verbose) {
-            for (Document d : parsedData
-                 ) {
-                d.printDoc();
-            }
-        }
-
-        if (timed) {
-            final long end = System.currentTimeMillis();
-            System.out.println("Total excecution time: " + (end - start));
-        }
-
-    }
-
-    /**
-     * Prints all document information
-     */
-    @Deprecated
-    private static void printAllDocs () {
-        for (Document d : parsedData
-                ) {
-            System.out.println(parsedData.get(parsedData.indexOf(d)).getDocumentID());
-            System.out.println(parsedData.get(parsedData.indexOf(d)).getDocumentNo());
-            System.out.println(parsedData.get(parsedData.indexOf(d)).getHeadline());
-            System.out.println(parsedData.get(parsedData.indexOf(d)).getTextData());
-            System.out.println();
         }
     }
 
