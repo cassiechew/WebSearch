@@ -1,5 +1,9 @@
 package util;
 
+
+/**
+ * Tags that will be used to signal a switch in whether to process what is being read
+ */
 public enum SwitchTags {
 
     HEADLINE ("<HEADLINE>"),

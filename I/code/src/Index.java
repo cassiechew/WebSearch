@@ -92,17 +92,18 @@ public class Index {
         }
 
 
+
         final long start = (timed) ? System.currentTimeMillis() : 0;
 
 
         documentHandler.setDocumentFactory(documentFactory);
-
         documentHandler.setCurrentFile(currentFile);
+
         if (hasStoplist) {
             documentHandler.scanStopList(stopfile);
         }
-        parsedData = documentHandler.readFile();
 
+        parsedData = documentHandler.readFile();
 
         invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME, MAPFILENAME);
         invIndexGenerator.createList(parsedData);

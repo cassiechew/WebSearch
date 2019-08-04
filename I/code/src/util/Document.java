@@ -4,7 +4,7 @@ import java.util.UUID;
 
 
 /**
- * A Document type
+ * A Document type that contains relevant information
  */
 public class Document {
 

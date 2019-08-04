@@ -82,16 +82,10 @@ public class DocumentHandler {
 
                 /* This checks if the document has ended and will generate a document object */
                 if (buffer.equals(SwitchTags.CLOSEDOC.getText())) {
-
-
-
                     documentArrayList.add(this.documentFactory.createDocument(
                             documentNo.toString(),
                             stoppingFunction(header),
                             stoppingFunction(textData)));
-
-
-
                     documentNo.setLength(0);
                     header.setLength(0);
                     textData.setLength(0);
@@ -254,7 +248,7 @@ public class DocumentHandler {
      * @param documentNo The number of the document
      * @param heading The heading of the document
      * @param textData The content data of the document
-     * @return
+     * @return The produced document
      */
     private Document generateDocument (String documentNo, String heading, String textData) {
 
