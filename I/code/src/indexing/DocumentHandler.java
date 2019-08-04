@@ -1,6 +1,4 @@
-package indexing; /**
- * This is a class that handles file IO.
- */
+package indexing;
 
 
 
@@ -13,12 +11,17 @@ import util.DocumentFactory;
 import util.SkipTags;
 import util.SwitchTags;
 
+/**
+ * This is a class that handles the reading and creation of documents.
+ */
+public class DocumentHandler {
 
-public class FileReaderS {
-
+    private static final String MAPFILENAME = "map";
 
     /** The current data file being used */
     private File currentFile;
+
+
 
     @Deprecated
     /** Stoplist to compare to for word removal */
@@ -30,7 +33,6 @@ public class FileReaderS {
     private Map<Integer, Document> dataMap;
 
     private DocumentFactory documentFactory;
-
     private int currentDocumentCount;
 
 
@@ -43,14 +45,14 @@ public class FileReaderS {
     }
 
 
-    public FileReaderS() {
+    public DocumentHandler() {
         currentDocumentCount = 0;
     }
 
 
     /**
      * Quick word processing method
-     * @return
+     * @return An arraylist of the produced documents from the infile
      */
     public ArrayList<Document> readFile() {//List<String> readFile() {
 
@@ -62,8 +64,8 @@ public class FileReaderS {
 
         String buffer;
 
-        BufferedReader reader;
-        FileReader fileReader;
+        BufferedReader reader = null;
+        FileReader fileReader = null;
 
         boolean readHeader = false;
         boolean readText = false;
@@ -80,19 +82,23 @@ public class FileReaderS {
 
                 /* This checks if the document has ended and will generate a document object */
                 if (buffer.equals(SwitchTags.CLOSEDOC.getText())) {
+
+                    final long start = System.currentTimeMillis();
+
+
                     documentArrayList.add(this.documentFactory.createDocument(
                             documentNo.toString(),
-                            stoppingFunction(header).replaceAll("\\s+", " "),
-                            stoppingFunction(textData).replaceAll("\\s+", " ")));
+                            stoppingFunction(header),
+                            stoppingFunction(textData)));
+
+                    final long end = System.currentTimeMillis();
 
 
+                    System.out.println("Total excecution time: " + (end - start));
 
-                            /*generateDocument(
-                            documentNo.toString(), stoppingFunction(header).replaceAll("\\s+", " "),
-                            stoppingFunction(textData).replaceAll("\\s+", " ")));*/
-                    documentNo = new StringBuilder();
-                    header = new StringBuilder();
-                    textData = new StringBuilder();
+                    documentNo.setLength(0);
+                    header.setLength(0);
+                    textData.setLength(0);
                 }
 
 
@@ -126,17 +132,12 @@ public class FileReaderS {
                 }
 
                 /* This reads the text content of the current document */
-                if (readText) {
+                else if (readText) {
 
                     if (buffer.equals(SkipTags.PARA.getText()) || buffer.equals(SkipTags.CLOSEPARA.getText()) ||
                             buffer.equals(SkipTags.TEXT.getText()) || buffer.equals(SkipTags.HEADLINE.getText())) {
                         continue;
                     }
-
-                //"((?<!\\w)-(?!\\w))|\\p{Punct}",[^A-Za-z0-9\s]
-
-                    //textData.append(buffer.replaceAll("[^a-zA-Z0-9_.-]|(?<!\\S)-|-(?!\\S)|(?<!\\d)\\.|\\.(?!\\d)"," ")
-                      //      .toLowerCase());
 
                     textData.append(buffer.replaceAll("(?<!\\S)\\p{Punct}+|\\p{Punct}+(?!\\S)", " ")
                             .toLowerCase());
@@ -151,8 +152,16 @@ public class FileReaderS {
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Oops! We failed at reading the file!");
+        } finally {
+            try {
+                reader.close();
+                fileReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
+        syncDataMap();
         writeOutFile();
         return documentArrayList;
 
@@ -160,40 +169,44 @@ public class FileReaderS {
 
 
     /**
+     * Synchronizes the outfile datamap with the document registry
+     */
+    private void syncDataMap () {
+        this.dataMap = this.documentFactory.getDocumentRegistry();
+    }
+
+
+    /**
      * Scans the list of the inputted stop word list and builds the Hashtable for function usage
-     * @param stoplist
+     * @param stoplist The path to the stoplist to read
      */
     public void scanStopList (String stoplist) {
 
         File stoplistFile = new File (stoplist);
-        //StringBuilder stringBuilder = new StringBuilder();
-
-        //String temp;
+        FileReader fileReader = null;
+        BufferedReader bufferedReader = null;
 
         this.stoplistHashtable = new Hashtable<>();
 
-        //stringBuilder.append("(?<=\\s+)\\b(");
-
         try {
-            FileReader fileReader = new FileReader(stoplistFile);
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            fileReader = new FileReader(stoplistFile);
+            bufferedReader = new BufferedReader(fileReader);
 
             String buffer;
 
             while ((buffer = bufferedReader.readLine()) != null) {
-                //stringBuilder.append(buffer + "|");
                 hashString(buffer);
             }
 
-            //stringBuilder.deleteCharAt(stringBuilder.length()-1);
-            //stringBuilder.append(")\\b(?=\\s+)");
-
-
-
-            //this.stoplist = stringBuilder.toString();
-
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                bufferedReader.close();
+                fileReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
 
@@ -202,7 +215,7 @@ public class FileReaderS {
 
     /**
      * A hashing function for strings
-     * @param s
+     * @param s The string to hash
      */
     public void hashString (String s) {
 
@@ -219,6 +232,7 @@ public class FileReaderS {
     private String stoppingFunction (StringBuilder textData) {
 
 
+
         String[] textArray = textData.toString().split(" ");
 
         for (int i = 0; i < textArray.length; i++) {
@@ -233,13 +247,7 @@ public class FileReaderS {
 
         return String.join(" ", textArray).replaceAll("\\s+", " ")
                 .replaceAll("^\\s+|$\\s+", "");
-        /*
-        Pattern p = Pattern.compile(stoplist);
-        Matcher m = p.matcher(textData.toString());
-        String s = m.replaceAll(" ");
 
-        return s;
-    */
 
     }
 
@@ -268,28 +276,38 @@ public class FileReaderS {
      */
     private void writeOutFile () {
 
+        FileWriter fw = null;
+        BufferedWriter pw = null;
+
         try {
-            File outfile = new File("map");
+            File outfile = new File(MAPFILENAME);
 
             if (!outfile.isFile() && !outfile.createNewFile())
             {
                 throw new IOException("Error creating new file: " + outfile.getAbsolutePath());
             }
 
-            FileWriter fw = new FileWriter(outfile);
-            PrintWriter pw = new PrintWriter(fw);
+            fw = new FileWriter(outfile);
+            //pw = new BufferedWriter(fw);
+
 
             for (Map.Entry<Integer, Document> entry : dataMap.entrySet()) {
-                pw.print(entry.getKey() + " " + entry.getValue().getDocumentNo() + "\n");
+                fw.write(entry.getKey() + " " + entry.getValue().getDocumentNo() + "\n");
             }
 
-            pw.flush();
-            pw.close();
-            fw.close();
+            fw.flush();
+
 
 
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                //pw.close();
+                fw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
     }

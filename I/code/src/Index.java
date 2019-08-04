@@ -1,95 +1,94 @@
-import indexing.FileReaderS;
+import indexing.DocumentHandler;
+import indexing.InvIndexGenerator;
 import util.Document;
 import util.DocumentFactory;
 
+import java.io.PrintStream;
 import java.util.HashMap;
+
 import java.util.List;
 import java.util.Map;
 
 public class Index {
+
+    private static final String LEXICONFILENAME = "lexicon";
+    private static final String INVLISTFILENAME = "invlist";
+    public static final String MAPFILENAME = "map";
+
 
     private static final int FAILURE = 1;
 
     private static boolean verbose = false;
     private static boolean hasStoplist = false;
 
-    private static int argslength = 0;
 
     private static List<Document> parsedData;
     private static Map<Integer, Document> documentMap;
 
     public static void main (String[] args) {
 
-        FileReaderS fileReaderS = new FileReaderS();
+
+        DocumentHandler documentHandler = new DocumentHandler();
+        DocumentFactory documentFactory;
+        InvIndexGenerator invIndexGenerator;
+
+        String currentFile = null;
+        String stopfile = null;
+
+        boolean[] opsArray = new boolean[args.length];
+
         documentMap = new HashMap<>();
-        DocumentFactory documentFactory = new DocumentFactory(documentMap);
+        documentFactory = new DocumentFactory(documentMap);
 
-        switch (args.length) {
+        for (int i = 0; i < args.length; i++) {
 
-            case 1:
-                argslength = 1;
-                break;
+            if (args[i].equals("-h") | args[i].equals("--help")) {
+                usage(System.out);
+                return;
+            }
 
-            case 2:
-                if (args[0].equals("-p")) {
-                    verbose = true;
-                    argslength = 2;
-                } else {
-                    System.out.println(
-                            "Failed: correct usage\n\n    ./index [-s <stoplist>] [-p] <sourcefile>"
-                    );
-                    System.exit(FAILURE);
+            if (args[i].equals("-p") | args[i].equals("--print")) {
+                verbose = true;
+                opsArray[i] = true;
+                continue;
+            }
+
+            if (args[i].equals("-s") | args[i].equals("--stoplist")) {
+                hasStoplist = true;
+                opsArray[i] = true;
+                if (args.length <= i+1 | args[i+1].startsWith("-")) {
+                    System.err.println("Missing file for " + args[i]);
                 }
-                break;
-            case 3:
-                if (args[0].equals("-s") && !args[1].equals("-p")) {
-                    hasStoplist = true;
-                    argslength = 3;
-                } else {
-                    System.out.println(
-                            "Failed: correct usage\n\n    ./index [-s <stoplist>] [-p] <sourcefile>"
-                    );
-                    System.exit(FAILURE);
-                }
-                break;
+                stopfile = args[i+1];
+                opsArray[i+1] = true;
 
-            case 4:
-                if (args[0].equals("-s") && !args[1].equals("-p")) {
-                    hasStoplist = true;
-                    argslength = 4;
+                continue;
+            }
 
-                    if (args[2].equals("-p")) {
-                        verbose = true;
-                    } else {
-                        System.out.println(
-                                "Failed: correct usage\n\n    ./index [-s <stoplist>] [-p] <sourcefile>"
-                        );
-                        System.exit(FAILURE);
-                    }
 
-                } else {
-                    System.out.println(
-                            "Failed: correct usage\n\n    ./index [-s <stoplist>] [-p] <sourcefile>"
-                    );
-                    System.exit(FAILURE);
-                }
-                break;
 
-            default:
-                System.out.println(
-                        "Failed: correct usage\n\n    ./index [-s <stoplist>] [-p] <sourcefile>"
-                );
-                System.exit(FAILURE);
         }
 
+        for (int i = 0; i < opsArray.length; i++) {
+            if (!opsArray[i]) {
+                currentFile = args[i];
+            }
+        }
 
-        fileReaderS.setDocumentFactory(documentFactory);
+        documentHandler.setDocumentFactory(documentFactory);
 
-        fileReaderS.setCurrentFile(args[argslength - 1]);
+        documentHandler.setCurrentFile(currentFile);
         if (hasStoplist) {
-            fileReaderS.scanStopList(args[1]);
+            documentHandler.scanStopList(stopfile);
         }
-        parsedData = fileReaderS.readFile();
+        parsedData = documentHandler.readFile();
+
+
+        invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME, MAPFILENAME);
+
+        invIndexGenerator.createList(parsedData);
+        invIndexGenerator.writeOutfileData();
+
         if (verbose) {
             for (Document d : parsedData
                  ) {
@@ -97,9 +96,14 @@ public class Index {
             }
         }
 
+
+
     }
 
-
+    /**
+     * Prints all document information
+     */
+    @Deprecated
     private static void printAllDocs () {
         for (Document d : parsedData
                 ) {
@@ -109,6 +113,20 @@ public class Index {
             System.out.println(parsedData.get(parsedData.indexOf(d)).getTextData());
             System.out.println();
         }
+    }
+
+
+    /**
+     * Usage message for CLI ops
+     * @param ps The out stream to write to
+     */
+    private static void usage(PrintStream ps) {
+        ps.println("Usage: Index [-p|--print] [-s|-stoplist <source file>] <source file>");
+        ps.println("Creates an inverted index of the supplied document");
+        ps.println("Options:");
+        ps.println("  -p, --print            Prints the cleaned text");
+        ps.println("  -s, --stoplist         Uses the supplied stoplist for processing");
+        ps.println("  -h, --help             Prints this help message and exits");
     }
 
 }

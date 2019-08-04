@@ -2,7 +2,12 @@ package indexing;
 
 import util.Document;
 
-import java.io.File;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,8 +20,7 @@ import java.util.Map;
 public class InvIndexGenerator {
 
 
-
-    /** Contains each unique term that occurs in the collection and a “pointer” to the inverted list for that term */
+    /** Contains each unique term that occurs in the collection and a pointer to the inverted list for that term */
     private File lexiconFile;
 
     /** Contains the inverted list information, consisting only of numerical data */
@@ -36,11 +40,15 @@ public class InvIndexGenerator {
         invlistsFile = new File(invlistFilename);
         mapFile = new File(mapFilename);
 
+        this.lexiconInvlist = new HashMap<>();
+
     }
 
 
-    //go through header and body text to count words
-
+    /**
+     * Creates the full inverted list data
+     * @param documentList The list of documents to process
+     */
     public void createList (List<Document> documentList) {
 
         for (Document d : documentList
@@ -51,60 +59,138 @@ public class InvIndexGenerator {
 
         }
 
+        lexiconInvlist.remove("");
+
             //store document number, frequency it appears here
 
-            /*
-            for (String s : d.getHeadline().split(" ")) {
-                if (!lexiconInvlist.containsKey(s)) {
-                    lexiconInvlist.put(s, new HashMap<>(d.getDocumentID(), 1));
-                }
-                else {
-                    if (lexiconInvlist.get(s).containsKey(d.getDocumentID())) {
-                        lexiconInvlist.get(s).replace(d.getDocumentID(), lexiconInvlist.get(s).get(d.getDocumentID()));
-                    }
-                    else {
-                        lexiconInvlist.get(s).put(d.getDocumentID(), 1);
-                    }
-                }
-            }
-
-            for (String s : d.getTextData().split(" ")) {
-                if (!lexiconInvlist.containsKey(s)) {
-                    lexiconInvlist.put(s, new HashMap<>(d.getDocumentID(), 1));
-                }
-                else {
-                    if (lexiconInvlist.get(s).containsKey(d.getDocumentID())) {
-                        lexiconInvlist.get(s).replace(d.getDocumentID(), lexiconInvlist.get(s).get(d.getDocumentID()));
-                    }
-                    else {
-                        lexiconInvlist.get(s).put(d.getDocumentID(), 1);
-                    }
-                }
-            }
-        } */
-
+        //System.out.println(lexiconInvlist.toString());
     }
 
-    public void mapLexiconData (int documentID, String[] textData) {
+
+    /**
+     * The mapping function for the lexicon data. It reads through the document headers and text content and maps the
+     * words and frequencies of each word to the internal inverted list
+     * @param documentID The ID of the current document being processed
+     * @param textData The text data to process from the current document
+     */
+    private void mapLexiconData (int documentID, String[] textData) {
 
         for (String s : textData) {
             if (!lexiconInvlist.containsKey(s)) {
-                lexiconInvlist.put(s, new HashMap<>(documentID, 1));
+                HashMap<Integer, Integer> newSet = new HashMap<>();
+                newSet.put(documentID, 1);
+                lexiconInvlist.put(s, newSet);
             }
             else {
                 if (lexiconInvlist.get(s).containsKey(documentID)) {
-                    lexiconInvlist.get(s).replace(documentID, lexiconInvlist.get(s).get(documentID));
+                    lexiconInvlist.get(s).replace(documentID, lexiconInvlist.get(s).get(documentID) + 1);
                 }
                 else {
                     lexiconInvlist.get(s).put(documentID, 1);
                 }
             }
         }
+    }
+
+
+    /**
+     * The branching function to start the writing to the outfiles
+     */
+    public void writeOutfileData () {
+
+        Map<String, Long> lexiconPairData;
+
+        lexiconPairData = writeInvertedListData();
+        writeLexiconData(lexiconPairData);
+    }
+
+
+    /**
+     * Writes the lexicon file, containing the current indexed words and the pointer location in the index file
+     * @param lexiconPairData The map of the lexicon and pointer data
+     */
+    private void writeLexiconData (Map<String, Long> lexiconPairData) {
+
+        FileWriter fileWriter = null;
+        BufferedWriter bufferedWriter = null;
+
+        try {
+
+            fileWriter = new FileWriter(lexiconFile);
+            bufferedWriter = new BufferedWriter(fileWriter);
+
+            for (String key : lexiconPairData.keySet()) {
+                bufferedWriter.write(key + " " + lexiconPairData.get(key) + "\n");
+            }
+
+            bufferedWriter.flush();
+            bufferedWriter.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                bufferedWriter.close();
+                fileWriter.close();
+            } catch (IOException e ) {
+                e.printStackTrace();
+            }
+        }
+
 
     }
 
-    //create lexicon
-    //create inverted list
+
+    /**
+     * Writes the numerical-binary data for the inverted list
+     * @return returns the mapping of the words to pointer locations in the binary file
+     */
+    private Map<String, Long> writeInvertedListData () {
+
+        Map<String, Long> lexiconPairData = new HashMap<>();
+        RandomAccessFile invlistRAFile = null;
+        FileChannel fileChannel = null;
+        StringBuilder stringBuilder = null;
+        ByteBuffer byteBuffer;
+
+        try {
+
+            invlistRAFile = new RandomAccessFile(invlistsFile, "rw");
+            fileChannel = invlistRAFile.getChannel();
+            stringBuilder = new StringBuilder();
+
+            for (String key: lexiconInvlist.keySet()
+                 ) {
+                Map<Integer, Integer> mappingData = lexiconInvlist.get(key);
+                lexiconPairData.put(key, fileChannel.position());
+
+
+                for (Integer documentID : mappingData.keySet()) {
+
+                    stringBuilder.append(documentID + " " + mappingData.get(documentID) + " ");
+
+                }
+
+
+                stringBuilder.setLength(0);
+
+            }
+
+            byteBuffer = ByteBuffer.wrap(stringBuilder.toString().getBytes(StandardCharsets.UTF_8));
+            byteBuffer.flip();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                fileChannel.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return lexiconPairData;
+    }
 
 
 

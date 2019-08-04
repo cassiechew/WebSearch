@@ -2,6 +2,10 @@ package util;
 
 import java.util.UUID;
 
+
+/**
+ * A Document type
+ */
 public class Document {
 
     /** DOCNO */
@@ -40,6 +44,9 @@ public class Document {
     }
 
 
+    /**
+     * Prints the document
+     */
     public void printDoc () {
         System.out.println(documentID);
         System.out.println(documentNo);
