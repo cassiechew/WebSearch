@@ -162,18 +162,17 @@ public class InvIndexGenerator {
 
                 for (Integer documentID : mappingData.keySet()) {
 
-                    stringBuilder.append(documentID);
+                    stringBuilder.append(Integer.toBinaryString(documentID));
                     stringBuilder.append(" ");
-                    stringBuilder.append(mappingData.get(documentID));
+                    stringBuilder.append(Integer.toBinaryString(mappingData.get(documentID)));
                     stringBuilder.append(" ");
 
                 }
 
-
+                stringBuilder.append("\n");
                 byteBuffer = ByteBuffer.wrap(stringBuilder.toString().getBytes(StandardCharsets.UTF_8));
                 fileChannel.write(byteBuffer);
                 stringBuilder.setLength(0);
-
 
             }
 

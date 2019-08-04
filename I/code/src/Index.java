@@ -28,7 +28,6 @@ public class Index {
 
     public static void main (String[] args) {
 
-
         DocumentHandler documentHandler = new DocumentHandler();
         DocumentFactory documentFactory;
         InvIndexGenerator invIndexGenerator;
@@ -110,19 +109,16 @@ public class Index {
         int opsCount        = 0;
 
         for (int i = 0; i < args.length; i++) {
-
             if (args[i].equals("-h") | args[i].equals("--help")) {
                 usage();
                 return;
             }
-
             if (args[i].equals("-p") | args[i].equals("--print")) {
                 verbose = true;
                 opsArray[i] = true;
                 opsCount++;
                 continue;
             }
-
             if (args[i].equals("-s") | args[i].equals("--stoplist")) {
                 hasStoplist = true;
                 opsArray[i] = true;
@@ -136,24 +132,18 @@ public class Index {
 
                 continue;
             }
-
             if (args[i].equals("-t") | args[i].equals("--time")) {
                 timed = true;
                 opsArray[i] = true;
                 opsCount++;
             }
-
-
-
         }
-
         for (int i = 0; i < opsArray.length; i++) {
             if (!opsArray[i]) {
                 currentFile = args[i];
                 opsCount++;
             }
         }
-
         if (opsCount != opsArray.length) {
             System.exit(FAILURE);
         }
