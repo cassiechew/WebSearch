@@ -16,17 +16,11 @@ import util.SwitchTags;
  */
 public class DocumentHandler {
 
-    private static final String MAPFILENAME = "map";
-
     /** The current data file being used */
     private File currentFile;
 
     private boolean hasStopFile;
 
-
-    @Deprecated
-    /** Stoplist to compare to for word removal */
-    private String stoplist;
 
     private Map<Integer, String> stoplistHashtable;
 
@@ -74,7 +68,7 @@ public class DocumentHandler {
 
         this.dataMap = new HashMap<>();
 
-        char[] animationChars = new char[]{'|', '/', '-', '\\'};
+        //char[] animationChars = new char[]{'|', '/', '-', '\\'};
 
 
         try {
@@ -125,12 +119,7 @@ public class DocumentHandler {
                             buffer.equals(SkipTags.TEXT.getText()) || buffer.equals(SkipTags.HEADLINE.getText())) {
                         continue;
                     }
-                    header.append(buffer.replaceAll("(?<!\\S)\\p{Punct}+|\\p{Punct}+(?!\\S)", " ")
-                            .toLowerCase().replaceAll("n't", " not")
-                            .replaceAll("'re", " are").replaceAll("'m", " am")
-                            .replaceAll("'ll", " will").replaceAll("'ve", " have")
-                            .replaceAll("'s", "").replaceAll("(?<=\\w{3})\\.(?=\\w{3})", " ")
-                            .replaceAll("\\.", "").replaceAll("-", " "));
+                    header.append(processString(buffer));
                 }
 
                 /* This reads the text content of the current document */
@@ -141,12 +130,7 @@ public class DocumentHandler {
                         continue;
                     }
 
-                    textData.append(buffer.replaceAll("(?<!\\S)\\p{Punct}+|\\p{Punct}+(?!\\S)", " ")
-                            .toLowerCase().replaceAll("n't", " not")
-                            .replaceAll("'re", " are").replaceAll("'m", " am")
-                            .replaceAll("'ll", " will").replaceAll("'ve", " have")
-                            .replaceAll("'s", "").replaceAll("(?<=[a-z]{3})\\.(?=[a-z]{3})", " ")
-                            .replaceAll("\\.", "").replaceAll("-", " "));
+                    textData.append(processString(buffer));
                 }
 
 
@@ -169,9 +153,23 @@ public class DocumentHandler {
         }
 
         syncDataMap();
-        writeOutFile();
         return documentArrayList;
 
+    }
+
+
+    /**
+     * A quick function to tokenize and normalize a block of text
+     * @param buffer The block of text to process
+     * @return The processed block of text
+     */
+    private String processString(String buffer) {
+        return buffer.replaceAll("(?<!\\S)\\p{Punct}+|\\p{Punct}+(?!\\S)", " ")
+                .toLowerCase().replaceAll("n't", " not")
+                .replaceAll("'re", " are").replaceAll("'m", " am")
+                .replaceAll("'ll", " will").replaceAll("'ve", " have")
+                .replaceAll("'s", "").replaceAll("(?<=\\w{3})\\.(?=\\w{3})", " ")
+                .replaceAll("\\.", "").replaceAll("-", " ");
     }
 
 
@@ -210,6 +208,7 @@ public class DocumentHandler {
             e.printStackTrace();
         } finally {
             try {
+                assert bufferedReader != null;
                 bufferedReader.close();
                 fileReader.close();
             } catch (IOException e) {
@@ -225,7 +224,7 @@ public class DocumentHandler {
      * A hashing function for strings
      * @param s The string to hash
      */
-    public void hashString (String s) {
+    private void hashString(String s) {
 
         this.stoplistHashtable.put(s.hashCode(), s);
 
@@ -234,8 +233,8 @@ public class DocumentHandler {
 
     /**
      * Removes all the stop words from the provided text
-     * @param textData
-     * @return
+     * @param textData The string of data to remove the stop words from
+     * @return The string with the stop words removed
      */
     private String stoppingFunction (StringBuilder textData) {
 
@@ -259,7 +258,6 @@ public class DocumentHandler {
 
     }
 
-    @Deprecated
     /**
      * Used to create a document
      *
@@ -268,6 +266,7 @@ public class DocumentHandler {
      * @param textData The content data of the document
      * @return The produced document
      */
+    @Deprecated
     private Document generateDocument (String documentNo, String heading, String textData) {
 
         int id = currentDocumentCount;
@@ -282,13 +281,12 @@ public class DocumentHandler {
     /**
      * Writes the mapping data to an out file
      */
-    private void writeOutFile () {
+    public void writeOutFile (String mapFileName) {
 
         FileWriter fw = null;
-        BufferedWriter pw = null;
 
         try {
-            File outfile = new File(MAPFILENAME);
+            File outfile = new File(mapFileName);
 
             if (!outfile.isFile() && !outfile.createNewFile())
             {
@@ -296,7 +294,6 @@ public class DocumentHandler {
             }
 
             fw = new FileWriter(outfile);
-            //pw = new BufferedWriter(fw);
 
 
             for (Map.Entry<Integer, Document> entry : dataMap.entrySet()) {
@@ -311,7 +308,7 @@ public class DocumentHandler {
             e.printStackTrace();
         } finally {
             try {
-                //pw.close();
+                assert fw != null;
                 fw.close();
             } catch (IOException e) {
                 e.printStackTrace();

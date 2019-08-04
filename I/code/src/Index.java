@@ -3,7 +3,6 @@ import indexing.InvIndexGenerator;
 import util.Document;
 import util.DocumentFactory;
 
-import java.io.PrintStream;
 import java.util.HashMap;
 
 import java.util.List;
@@ -13,7 +12,7 @@ public class Index {
 
     private static final String LEXICONFILENAME = "lexicon";
     private static final String INVLISTFILENAME = "invlist";
-    public static final String MAPFILENAME      = "map";
+    private static final String MAPFILENAME     = "map";
 
 
     private static boolean verbose      = false;
@@ -23,7 +22,6 @@ public class Index {
     private final static int FAILURE = 1;
 
     private static List<Document> parsedData;
-    private static Map<Integer, Document> documentMap;
 
     private static String currentFile  = null;
     private static String stopfile     = null;
@@ -35,7 +33,7 @@ public class Index {
         DocumentFactory documentFactory;
         InvIndexGenerator invIndexGenerator;
 
-        documentMap = new HashMap<>();
+        Map<Integer, Document> documentMap = new HashMap<>();
         documentFactory = new DocumentFactory(documentMap);
 
         opsHandler(args);
@@ -54,10 +52,13 @@ public class Index {
 
         System.out.println("Parsing document data...");
         parsedData = documentHandler.readFile();
+
+        System.out.println("Writing mapping data...");
+        documentHandler.writeOutFile(MAPFILENAME);
         System.out.println("Parsing complete!");
 
         System.out.println("Initializing index generator...");
-        invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME, MAPFILENAME);
+        invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME);
 
         System.out.println("Indexing data...");
         invIndexGenerator.createList(parsedData);
@@ -111,7 +112,7 @@ public class Index {
         for (int i = 0; i < args.length; i++) {
 
             if (args[i].equals("-h") | args[i].equals("--help")) {
-                usage(System.out);
+                usage();
                 return;
             }
 
@@ -140,7 +141,6 @@ public class Index {
                 timed = true;
                 opsArray[i] = true;
                 opsCount++;
-                continue;
             }
 
 
@@ -162,15 +162,14 @@ public class Index {
 
     /**
      * Usage message for CLI ops
-     * @param ps The out stream to write to
      */
-    private static void usage(PrintStream ps) {
-        ps.println("Usage: Index [-p|--print] [-s|-stoplist <source file>] <source file>");
-        ps.println("Creates an inverted index of the supplied document");
-        ps.println("Options:");
-        ps.println("  -p, --print            Prints the cleaned text");
-        ps.println("  -s, --stoplist         Uses the supplied stoplist for processing");
-        ps.println("  -h, --help             Prints this help message and exits");
+    private static void usage() {
+        System.out.println("Usage: Index [-p|--print] [-s|-stoplist <source file>] <source file>");
+        System.out.println("Creates an inverted index of the supplied document");
+        System.out.println("Options:");
+        System.out.println("  -p, --print            Prints the cleaned text");
+        System.out.println("  -s, --stoplist         Uses the supplied stoplist for processing");
+        System.out.println("  -h, --help             Prints this help message and exits");
     }
 
 }

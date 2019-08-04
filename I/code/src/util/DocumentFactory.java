@@ -1,6 +1,5 @@
 package util;
 
-import javax.print.Doc;
 import java.util.Map;
 
 
@@ -30,7 +29,7 @@ public class DocumentFactory {
      * @param documentID The ID to register with
      * @param document THe document to register
      */
-    public void registerDocument (Integer documentID, Document document) {
+    void registerDocument(Integer documentID, Document document) {
 
         this.documentRegistry.put(documentID, document);
 
