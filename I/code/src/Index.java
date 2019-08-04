@@ -43,6 +43,7 @@ public class Index {
 
         final long start = (timed) ? System.currentTimeMillis() : 0;
 
+        System.out.println("\033[H\033[2J");
         System.out.println("Initializing factories and files...");
         documentHandler.setDocumentFactory(documentFactory);
         documentHandler.setCurrentFile(currentFile);

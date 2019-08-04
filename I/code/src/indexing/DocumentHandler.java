@@ -74,6 +74,9 @@ public class DocumentHandler {
 
         this.dataMap = new HashMap<>();
 
+        char[] animationChars = new char[]{'|', '/', '-', '\\'};
+
+
         try {
             fileReader = new FileReader(this.currentFile);
             reader = new BufferedReader(fileReader);
@@ -81,6 +84,9 @@ public class DocumentHandler {
 
 
             while ((buffer = reader.readLine()) != null) {
+
+                //System.out.print("Processing: " + (documentArrayList.size() + 1) + " Documents read... " + "\r");
+
 
                 /* This checks if the document has ended and will generate a document object */
                 if (buffer.equals(SwitchTags.CLOSEDOC.getText())) {
@@ -120,7 +126,11 @@ public class DocumentHandler {
                         continue;
                     }
                     header.append(buffer.replaceAll("(?<!\\S)\\p{Punct}+|\\p{Punct}+(?!\\S)", " ")
-                            .toLowerCase());
+                            .toLowerCase().replaceAll("n't", " not")
+                            .replaceAll("'re", " are").replaceAll("'m", " am")
+                            .replaceAll("'ll", " will").replaceAll("'ve", " have")
+                            .replaceAll("'s", "").replaceAll("(?<=\\w{3})\\.(?=\\w{3})", " ")
+                            .replaceAll("\\.", "").replaceAll("-", " "));
                 }
 
                 /* This reads the text content of the current document */
@@ -132,12 +142,17 @@ public class DocumentHandler {
                     }
 
                     textData.append(buffer.replaceAll("(?<!\\S)\\p{Punct}+|\\p{Punct}+(?!\\S)", " ")
-                            .toLowerCase());
+                            .toLowerCase().replaceAll("n't", " not")
+                            .replaceAll("'re", " are").replaceAll("'m", " am")
+                            .replaceAll("'ll", " will").replaceAll("'ve", " have")
+                            .replaceAll("'s", "").replaceAll("(?<=[a-z]{3})\\.(?=[a-z]{3})", " ")
+                            .replaceAll("\\.", "").replaceAll("-", " "));
                 }
 
 
-            }
 
+            }
+            //System.out.println();
             reader.close();
 
 

@@ -153,6 +153,7 @@ public class InvIndexGenerator {
         StringBuilder stringBuilder = null;
         ByteBuffer byteBuffer;
 
+
         try {
 
             invlistRAFile = new RandomAccessFile(invlistsFile, "rw");
@@ -167,17 +168,22 @@ public class InvIndexGenerator {
 
                 for (Integer documentID : mappingData.keySet()) {
 
-                    stringBuilder.append(documentID + " " + mappingData.get(documentID) + " ");
+                    stringBuilder.append(documentID);
+                    stringBuilder.append(" ");
+                    stringBuilder.append(mappingData.get(documentID));
+                    stringBuilder.append(" ");
 
                 }
 
 
+                byteBuffer = ByteBuffer.wrap(stringBuilder.toString().getBytes(StandardCharsets.UTF_8));
+                fileChannel.write(byteBuffer);
                 stringBuilder.setLength(0);
+
 
             }
 
-            byteBuffer = ByteBuffer.wrap(stringBuilder.toString().getBytes(StandardCharsets.UTF_8));
-            byteBuffer.flip();
+
 
         } catch (IOException e) {
             e.printStackTrace();
