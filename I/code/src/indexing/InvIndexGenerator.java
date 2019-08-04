@@ -5,9 +5,7 @@ import util.Document;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,19 +24,14 @@ public class InvIndexGenerator {
     /** Contains the inverted list information, consisting only of numerical data */
     private File invlistsFile;
 
-    /** Contains the mapping information from document id numbers
-     * (as used in the inverted lists) to the actual document names */
-    private File mapFile;
-
 
     private Map<String, Map<Integer, Integer>> lexiconInvlist;
 
 
-    public InvIndexGenerator (String lexiconFilename, String invlistFilename, String mapFilename) {
+    public InvIndexGenerator (String lexiconFilename, String invlistFilename) {
 
         lexiconFile = new File(lexiconFilename);
         invlistsFile = new File(invlistFilename);
-        mapFile = new File(mapFilename);
 
         this.lexiconInvlist = new HashMap<>();
 
@@ -130,6 +123,7 @@ public class InvIndexGenerator {
             e.printStackTrace();
         } finally {
             try {
+                assert bufferedWriter != null;
                 bufferedWriter.close();
                 fileWriter.close();
             } catch (IOException e ) {
@@ -148,9 +142,9 @@ public class InvIndexGenerator {
     private Map<String, Long> writeInvertedListData () {
 
         Map<String, Long> lexiconPairData = new HashMap<>();
-        RandomAccessFile invlistRAFile = null;
+        RandomAccessFile invlistRAFile;
         FileChannel fileChannel = null;
-        StringBuilder stringBuilder = null;
+        StringBuilder stringBuilder;
         ByteBuffer byteBuffer;
 
 
@@ -189,6 +183,7 @@ public class InvIndexGenerator {
             e.printStackTrace();
         } finally {
             try {
+                assert fileChannel != null;
                 fileChannel.close();
             } catch (IOException e) {
                 e.printStackTrace();
