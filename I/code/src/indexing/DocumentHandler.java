@@ -83,7 +83,6 @@ public class DocumentHandler {
                 /* This checks if the document has ended and will generate a document object */
                 if (buffer.equals(SwitchTags.CLOSEDOC.getText())) {
 
-                    final long start = System.currentTimeMillis();
 
 
                     documentArrayList.add(this.documentFactory.createDocument(
@@ -91,10 +90,7 @@ public class DocumentHandler {
                             stoppingFunction(header),
                             stoppingFunction(textData)));
 
-                    final long end = System.currentTimeMillis();
 
-
-                    System.out.println("Total excecution time: " + (end - start));
 
                     documentNo.setLength(0);
                     header.setLength(0);

@@ -13,14 +13,14 @@ public class Index {
 
     private static final String LEXICONFILENAME = "lexicon";
     private static final String INVLISTFILENAME = "invlist";
-    public static final String MAPFILENAME = "map";
+    public static final String MAPFILENAME      = "map";
 
 
-    private static final int FAILURE = 1;
+    private static boolean verbose      = false;
+    private static boolean hasStoplist  = false;
+    private static boolean timed        = false;
 
-    private static boolean verbose = false;
-    private static boolean hasStoplist = false;
-
+    private final static int FAILURE = 1;
 
     private static List<Document> parsedData;
     private static Map<Integer, Document> documentMap;
@@ -32,10 +32,11 @@ public class Index {
         DocumentFactory documentFactory;
         InvIndexGenerator invIndexGenerator;
 
-        String currentFile = null;
-        String stopfile = null;
+        String currentFile  = null;
+        String stopfile     = null;
 
-        boolean[] opsArray = new boolean[args.length];
+        boolean[] opsArray  = new boolean[args.length];
+        int opsCount        = 0;
 
         documentMap = new HashMap<>();
         documentFactory = new DocumentFactory(documentMap);
@@ -50,6 +51,7 @@ public class Index {
             if (args[i].equals("-p") | args[i].equals("--print")) {
                 verbose = true;
                 opsArray[i] = true;
+                opsCount++;
                 continue;
             }
 
@@ -62,6 +64,15 @@ public class Index {
                 stopfile = args[i+1];
                 opsArray[i+1] = true;
 
+                opsCount = opsCount + 2;
+
+                continue;
+            }
+
+            if (args[i].equals("-t") | args[i].equals("--time")) {
+                timed = true;
+                opsArray[i] = true;
+                opsCount++;
                 continue;
             }
 
@@ -72,8 +83,17 @@ public class Index {
         for (int i = 0; i < opsArray.length; i++) {
             if (!opsArray[i]) {
                 currentFile = args[i];
+                opsCount++;
             }
         }
+
+        if (opsCount != opsArray.length) {
+            System.exit(FAILURE);
+        }
+
+
+        final long start = (timed) ? System.currentTimeMillis() : 0;
+
 
         documentHandler.setDocumentFactory(documentFactory);
 
@@ -85,7 +105,6 @@ public class Index {
 
 
         invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME, MAPFILENAME);
-
         invIndexGenerator.createList(parsedData);
         invIndexGenerator.writeOutfileData();
 
@@ -96,7 +115,10 @@ public class Index {
             }
         }
 
-
+        if (timed) {
+            final long end = System.currentTimeMillis();
+            System.out.println("Total excecution time: " + (end - start));
+        }
 
     }
 

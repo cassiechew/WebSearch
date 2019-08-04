@@ -1,5 +1,7 @@
 package util;
 
+
+
 public enum SkipTags {
 
     PARA ("<P>"),
