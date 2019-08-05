@@ -8,6 +8,9 @@ import util.SwitchTags;
 
 import java.io.*;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 
@@ -22,7 +25,7 @@ public class DocumentHandler {
     private boolean hasStopFile;
 
 
-    private Map<Integer, String> stoplistHashtable;
+    private Map<String, String> stoplistHashtable;
 
     /** The data map to write to the out file */
     private Map<Integer, Document> dataMap;
@@ -201,10 +204,10 @@ public class DocumentHandler {
             String buffer;
 
             while ((buffer = bufferedReader.readLine()) != null) {
-                hashString(buffer);
+                this.stoplistHashtable.put(hashString(buffer), buffer);
             }
 
-        } catch (IOException e) {
+        } catch (IOException | NoSuchAlgorithmException e) {
             e.printStackTrace();
         } finally {
             try {
@@ -224,9 +227,23 @@ public class DocumentHandler {
      * A hashing function for strings
      * @param s The string to hash
      */
-    private void hashString(String s) {
+    private String hashString(String s)
+    throws NoSuchAlgorithmException {
 
-        this.stoplistHashtable.put(s.hashCode(), s);
+        //this.stoplistHashtable.put(s.hashCode(), s);
+
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        md.update(s.getBytes(StandardCharsets.UTF_8));
+
+        byte[] hashBytes = md.digest();
+        StringBuilder sb = new StringBuilder();
+
+        for (byte b : hashBytes) {
+            sb.append((String.format("%02x", b)));
+        }
+
+        //System.out.println(sb.toString());
+        return sb.toString();
 
     }
 
@@ -242,14 +259,19 @@ public class DocumentHandler {
 
         String[] textArray = textData.toString().split(" ");
 
-        for (int i = 0; i < textArray.length; i++) {
+        try {
 
-            int hash = textArray[i].hashCode();
+            for (int i = 0; i < textArray.length; i++) {
 
-            if (this.stoplistHashtable.containsKey(hash)) {
-                textArray[i] = "";
+                String hash = hashString(textArray[i]);
+
+                if (this.stoplistHashtable.containsKey(hash)) {
+                    textArray[i] = "";
+                }
+
             }
-
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
         }
 
         return String.join(" ", textArray).replaceAll("\\s+", " ")
