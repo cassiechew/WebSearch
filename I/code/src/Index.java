@@ -1,3 +1,5 @@
+
+
 import indexing.DocumentHandler;
 import indexing.InvIndexGenerator;
 import util.Document;
@@ -159,6 +161,7 @@ public class Index {
         System.out.println("Options:");
         System.out.println("  -p, --print            Prints the cleaned text");
         System.out.println("  -s, --stoplist         Uses the supplied stoplist for processing");
+        System.out.println("  -t, --time             Times the excecution time");
         System.out.println("  -h, --help             Prints this help message and exits");
     }
 

@@ -1,9 +1,8 @@
 package util;
 
 
-
 /**
- * A Document type that contains relevant information
+ * A util.Document type that contains relevant information
  */
 public class Document {
 

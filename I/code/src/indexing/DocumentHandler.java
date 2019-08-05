@@ -1,15 +1,15 @@
 package indexing;
 
 
+import util.Document;
+import util.DocumentFactory;
+import util.SkipTags;
+import util.SwitchTags;
 
 import java.io.*;
 
 import java.util.*;
 
-import util.Document;
-import util.DocumentFactory;
-import util.SkipTags;
-import util.SwitchTags;
 
 /**
  * This is a class that handles the reading and creation of documents.
