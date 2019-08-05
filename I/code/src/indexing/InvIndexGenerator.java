@@ -162,9 +162,13 @@ public class InvIndexGenerator {
 
                 for (Integer documentID : mappingData.keySet()) {
 
-                    stringBuilder.append(Integer.toBinaryString(documentID));
+                    //stringBuilder.append(Integer.toBinaryString(documentID));
+                    stringBuilder.append(Long.toBinaryString( Integer.toUnsignedLong(documentID) | 0x100000000L ).substring(1));
+
                     stringBuilder.append(" ");
-                    stringBuilder.append(Integer.toBinaryString(mappingData.get(documentID)));
+                    //stringBuilder.append(Integer.toBinaryString(mappingData.get(documentID)));
+                    stringBuilder.append(Long.toBinaryString( Integer.toUnsignedLong(mappingData.get(documentID)) | 0x100000000L ).substring(1));
+
                     stringBuilder.append(" ");
 
                 }

@@ -203,9 +203,12 @@ public class DocumentHandler {
 
             String buffer;
 
+
             while ((buffer = bufferedReader.readLine()) != null) {
                 this.stoplistHashtable.put(hashString(buffer), buffer);
             }
+
+
 
         } catch (IOException | NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -258,12 +261,13 @@ public class DocumentHandler {
 
 
         String[] textArray = textData.toString().split(" ");
+        String hash;
 
         try {
 
             for (int i = 0; i < textArray.length; i++) {
 
-                String hash = hashString(textArray[i]);
+                hash = hashString(textArray[i]);
 
                 if (this.stoplistHashtable.containsKey(hash)) {
                     textArray[i] = "";
