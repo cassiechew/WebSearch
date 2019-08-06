@@ -98,6 +98,48 @@ public class InvIndexGenerator {
     }
 
 
+    private byte[] varByteConversion (long input) {
+        int convertedInt = (int) input;
+        int numBytes = ((32 - Integer.numberOfLeadingZeros(convertedInt)) + 6) / 7;
+        // if the integer is 0, we still need 1 byte
+        numBytes = numBytes > 0 ? numBytes : 1;
+        byte[] output = new byte[numBytes];
+        System.out.println(Integer.toBinaryString((convertedInt & 0b1111111) | 0b10000000));
+        // for each byte of output ...
+        for(int i = 0; i < numBytes; i++) {
+            // ... take the least significant 7 bits of input and set the MSB to 1 ...
+            output[i] = (byte) ((convertedInt & 0b1111111) | 0b10000000);
+            // ... shift the input right by 7 places, discarding the 7 bits we just used
+            //System.out.print(Integer.toBinaryString(output[i]) + " ");
+            convertedInt >>= 7;
+        }
+        // finally reset the MSB on the last byte
+        output[0] &= 0b01111111;
+
+
+        /*String binaryRepresentation = Long.toBinaryString(input| 0x100000000L ).substring(1);
+        //System.out.println(binaryRepresentation);
+
+        System.out.println(0b110100101010 + " " + (0b110100101010 >> 7));
+
+
+        int numBytes = ((int) Math.ceil(((double)binaryRepresentation.length()) / 7.0));
+
+        byte[] bytes = new byte[numBytes];
+        String[] data = new String[numBytes];
+
+
+        for (int i = 0; i < numBytes; i++) {
+
+            System.out.print(Integer.toBinaryString(output[i]) + " ");
+
+        }*/
+        System.out.println();
+        return null;
+
+    }
+
+
     /**
      * Writes the lexicon file, containing the current indexed words and the pointer location in the index file
      * @param lexiconPairData The map of the lexicon and pointer data
@@ -114,6 +156,8 @@ public class InvIndexGenerator {
 
             for (String key : lexiconPairData.keySet()) {
                 bufferedWriter.write(key + " " + lexiconPairData.get(key) + "\n");
+
+                varByteConversion(lexiconPairData.get(key));
             }
 
             bufferedWriter.flush();
@@ -130,8 +174,6 @@ public class InvIndexGenerator {
                 e.printStackTrace();
             }
         }
-
-
     }
 
 
@@ -170,6 +212,10 @@ public class InvIndexGenerator {
                     stringBuilder.append(Long.toBinaryString( Integer.toUnsignedLong(mappingData.get(documentID)) | 0x100000000L ).substring(1));
 
                     stringBuilder.append(" ");
+
+                    if (documentID >= 256 | mappingData.get(documentID) >= 256) {
+                        System.out.println(documentID + " " + mappingData.get(documentID));
+                    }
 
                 }
 
