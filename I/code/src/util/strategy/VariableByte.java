@@ -3,6 +3,7 @@ package util.strategy;
 
 import util.LexMapping;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,58 +56,67 @@ public class VariableByte implements Strategy {
     public Map<String, Map<Integer, Integer>> decompress(String input, List<LexMapping> words) {
 
         Map<String, Map<Integer, Integer>> output = new HashMap<>();
-        char[] data = input.toCharArray();
 
-        final int byteLength = 8;
+        try {
+            final Field field = String.class.getDeclaredField("value");
+            field.setAccessible(true);
 
-        boolean checkCurrentInt;
-        boolean isDocument = true;
+            final char[] data = (char[]) field.get(input); //input.toCharArray();
 
-        int counter = byteLength;
-        int currentOffset = 0;
+            final int byteLength = 8;
 
-        StringBuilder sb = new StringBuilder();
+            boolean checkCurrentInt;
+            boolean isDocument = true;
 
-        // Assume string is 011001001001011010010101
-        //                  I       I       I
+            int counter = byteLength;
+            int currentOffset = 0;
 
-        /*
-            1. While reading invlist file, decompress, using stored file pointers from lexicon.
-            2. When file pointer is reached, call this function and send in word and integer string
-         */
+            StringBuilder sb = new StringBuilder();
 
-        for (LexMapping l : words) {
-            Map<Integer, Integer> documentMapping = new HashMap<>();
+            // Assume string is 011001001001011010010101
+            //                  I       I       I
 
-            int documentID = -1;
-            int frequency = -1;
+            /*
+                1. While reading invlist file, decompress, using stored file pointers from lexicon.
+                2. When file pointer is reached, call this function and send in word and integer string
+             */
 
-            for (int i = currentOffset; i < l.getOffset(); i++) {
+            for (LexMapping l : words) {
+                Map<Integer, Integer> documentMapping = new HashMap<>();
 
-                checkCurrentInt = currentOffset % byteLength == 0;
+                int documentID = -1;
+                int frequency = -1;
 
-                if (checkCurrentInt && (i != 0)) {
-                    if (isDocument) {
-                        documentID = singleDecompress(sb.toString());
-                        sb.setLength(0);
+                for (int i = currentOffset; i < l.getOffset(); i++) {
+
+                    checkCurrentInt = currentOffset % byteLength == 0;
+
+                    if (checkCurrentInt && (i != 0)) {
+                        if (isDocument) {
+                            documentID = singleDecompress(sb.toString());
+                            sb.setLength(0);
+                        }
+                        else {
+                            frequency = singleDecompress(sb.toString());
+                            sb.setLength(0);
+                        }
+                        isDocument = !isDocument;
+
                     }
-                    else {
-                        frequency = singleDecompress(sb.toString());
-                        sb.setLength(0);
+
+                    if (documentID >=0 && frequency >= 0) {
+                        documentMapping.put(documentID, frequency);
+                        documentID = -1;
+                        frequency = -1;
                     }
-                    isDocument = !isDocument;
-
+                    sb.append(data[i]);
+                    currentOffset++;
                 }
-
-                if (documentID >=0 && frequency >= 0) {
-                    documentMapping.put(documentID, frequency);
-                    documentID = -1;
-                    frequency = -1;
-                }
-                sb.append(data[i]);
-                currentOffset++;
+                output.put(l.getWord(), documentMapping);
             }
-            output.put(l.getWord(), documentMapping);
+
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
         }
 
         return output;

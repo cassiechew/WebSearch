@@ -85,6 +85,8 @@ public class Index {
             System.out.println("Total execution time: " + (end - start));
         }
 
+
+
         System.out.println("Inverted index completed!");
 
     }
