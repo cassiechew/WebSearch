@@ -77,7 +77,6 @@ public class VariableByte implements Strategy {
 
         for (LexMapping l : words) {
             Map<Integer, Integer> documentMapping = new HashMap<>();
-            int realDocID = 0;
 
             int documentID = -1;
             int frequency = -1;
@@ -86,13 +85,14 @@ public class VariableByte implements Strategy {
 
                 checkCurrentInt = currentOffset % byteLength == 0;
 
-
                 if (checkCurrentInt && (i != 0)) {
                     if (isDocument) {
                         documentID = singleDecompress(sb.toString());
+                        sb.setLength(0);
                     }
                     else {
                         frequency = singleDecompress(sb.toString());
+                        sb.setLength(0);
                     }
                     isDocument = !isDocument;
 
@@ -106,14 +106,10 @@ public class VariableByte implements Strategy {
                 sb.append(data[i]);
                 currentOffset++;
             }
-
             output.put(l.getWord(), documentMapping);
-
         }
 
-
         return output;
-
     }
 
 
