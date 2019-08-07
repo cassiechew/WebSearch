@@ -20,6 +20,7 @@ public class Index {
     private static boolean verbose      = false;
     private static boolean hasStoplist  = false;
     private static boolean timed        = false;
+    private static boolean compress     = false;
 
     private final static int FAILURE = 1;
 
@@ -36,6 +37,8 @@ public class Index {
 
         Map<Integer, Document> documentMap = new HashMap<>();
         documentFactory = new DocumentFactory(documentMap);
+
+        compress = false;
 
         opsHandler(args);
 
@@ -59,7 +62,7 @@ public class Index {
         System.out.println("Parsing complete!");
 
         System.out.println("Initializing index generator...");
-        invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME, false);
+        invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME, compress);
 
         System.out.println("Indexing data...");
         invIndexGenerator.createList(parsedData);
@@ -113,10 +116,16 @@ public class Index {
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals("-h") | args[i].equals("--help")) {
                 usage();
-                return;
+                System.exit(FAILURE);
             }
             if (args[i].equals("-p") | args[i].equals("--print")) {
                 verbose = true;
+                opsArray[i] = true;
+                opsCount++;
+                continue;
+            }
+            if (args[i].equals("-c") | args[i].equals("--compress")) {
+                compress = true;
                 opsArray[i] = true;
                 opsCount++;
                 continue;
@@ -156,13 +165,14 @@ public class Index {
      * Usage message for CLI ops
      */
     private static void usage() {
-        System.out.println("Usage: Index [-p|--print] [-s|-stoplist <source file>] <source file>");
+        System.out.println("Usage: Index [-p|--print] [-s|-stoplist <src>] [-t, --time]\n" +
+                           "          [-c, --compress] [-h, --help] <source file>");
         System.out.println("Creates an inverted index of the supplied document");
         System.out.println("Options:");
         System.out.println("  -p, --print            Prints the cleaned text");
         System.out.println("  -s, --stoplist         Uses the supplied stoplist for processing");
         System.out.println("  -t, --time             Times the excecution time");
+        System.out.println("  -c, --compress         Use variable byte compression");
         System.out.println("  -h, --help             Prints this help message and exits");
     }
-
 }

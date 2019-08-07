@@ -53,7 +53,7 @@ public class DocumentHandler {
      * Quick word processing method
      * @return An arraylist of the produced documents from the infile
      */
-    public ArrayList<Document> readFile() {//List<String> readFile() {
+    public ArrayList<Document> readFile() {
 
         ArrayList<Document> documentArrayList = new ArrayList<>();
 
@@ -63,9 +63,6 @@ public class DocumentHandler {
 
         String buffer;
 
-        BufferedReader reader = null;
-        FileReader fileReader = null;
-
         boolean readHeader = false;
         boolean readText = false;
 
@@ -73,12 +70,11 @@ public class DocumentHandler {
 
         //char[] animationChars = new char[]{'|', '/', '-', '\\'};
 
+        try (
+                FileReader fileReader = new FileReader(this.currentFile);
+                BufferedReader reader = new BufferedReader(fileReader);
 
-        try {
-            fileReader = new FileReader(this.currentFile);
-            reader = new BufferedReader(fileReader);
-
-
+        ){
 
             while ((buffer = reader.readLine()) != null) {
 
@@ -135,24 +131,11 @@ public class DocumentHandler {
 
                     textData.append(processString(buffer));
                 }
-
-
-
             }
-            //System.out.println();
-            reader.close();
-
 
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Oops! We failed at reading the file!");
-        } finally {
-            try {
-                reader.close();
-                fileReader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
 
         syncDataMap();
@@ -191,38 +174,22 @@ public class DocumentHandler {
     public void scanStopList (String stoplist) {
 
         File stoplistFile = new File (stoplist);
-        FileReader fileReader = null;
-        BufferedReader bufferedReader = null;
 
         this.hasStopFile = true;
         this.stoplistHashtable = new Hashtable<>();
 
-        try {
-            fileReader = new FileReader(stoplistFile);
-            bufferedReader = new BufferedReader(fileReader);
-
+        try (
+                FileReader fileReader = new FileReader(stoplistFile);
+                BufferedReader bufferedReader = new BufferedReader(fileReader)
+        ){
             String buffer;
-
 
             while ((buffer = bufferedReader.readLine()) != null) {
                 this.stoplistHashtable.put(hashString(buffer), buffer);
             }
-
-
-
         } catch (IOException | NoSuchAlgorithmException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                assert bufferedReader != null;
-                bufferedReader.close();
-                fileReader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
-
-
     }
 
 
@@ -233,8 +200,7 @@ public class DocumentHandler {
     private String hashString(String s)
     throws NoSuchAlgorithmException {
 
-        //this.stoplistHashtable.put(s.hashCode(), s);
-
+        /* The hashing strategy to use */
         MessageDigest md = MessageDigest.getInstance("MD5");
         md.update(s.getBytes(StandardCharsets.UTF_8));
 
@@ -245,7 +211,6 @@ public class DocumentHandler {
             sb.append((String.format("%02x", b)));
         }
 
-        //System.out.println(sb.toString());
         return sb.toString();
 
     }
@@ -258,13 +223,10 @@ public class DocumentHandler {
      */
     private String stoppingFunction (StringBuilder textData) {
 
-
-
         String[] textArray = textData.toString().split(" ");
         String hash;
 
         try {
-
             for (int i = 0; i < textArray.length; i++) {
 
                 hash = hashString(textArray[i]);
@@ -272,7 +234,6 @@ public class DocumentHandler {
                 if (this.stoplistHashtable.containsKey(hash)) {
                     textArray[i] = "";
                 }
-
             }
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -280,8 +241,6 @@ public class DocumentHandler {
 
         return String.join(" ", textArray).replaceAll("\\s+", " ")
                 .replaceAll("^\\s+|$\\s+", "");
-
-
     }
 
     /**
@@ -306,21 +265,21 @@ public class DocumentHandler {
 
     /**
      * Writes the mapping data to an out file
+     * @param mapFileName The name of the outfile to write the mapping data
      */
     public void writeOutFile (String mapFileName) {
 
-        FileWriter fw = null;
+        File outfile = new File(mapFileName);
 
-        try {
-            File outfile = new File(mapFileName);
 
-            if (!outfile.isFile() && !outfile.createNewFile())
+        try (
+                FileWriter fw = new FileWriter(outfile);
+        ){
+
+            /*if (!outfile.isFile() && !outfile.createNewFile())
             {
                 throw new IOException("Error creating new file: " + outfile.getAbsolutePath());
-            }
-
-            fw = new FileWriter(outfile);
-
+            }*/
 
             for (Map.Entry<Integer, Document> entry : dataMap.entrySet()) {
                 fw.write(entry.getKey() + " " + entry.getValue().getDocumentNo() + "\n");
@@ -328,17 +287,8 @@ public class DocumentHandler {
 
             fw.flush();
 
-
-
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                assert fw != null;
-                fw.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
 
     }
