@@ -56,7 +56,7 @@ public class Compressed_Index {
         System.out.println("Parsing complete!");
 
         System.out.println("Initializing index generator...");
-        invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME);
+        invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME, true);
 
         System.out.println("Indexing data...");
         invIndexGenerator.createList(parsedData);

@@ -59,7 +59,7 @@ public class Index {
         System.out.println("Parsing complete!");
 
         System.out.println("Initializing index generator...");
-        invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME);
+        invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME, false);
 
         System.out.println("Indexing data...");
         invIndexGenerator.createList(parsedData);

@@ -6,9 +6,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -24,17 +22,20 @@ public class InvIndexGenerator {
     /** Contains the inverted list information, consisting only of numerical data */
     private File invlistsFile;
 
+    private boolean compress;
+
 
     private Map<String, Map<Integer, Integer>> lexiconInvlist;
 
 
-    public InvIndexGenerator (String lexiconFilename, String invlistFilename) {
+    public InvIndexGenerator (String lexiconFilename, String invlistFilename, boolean compress) {
 
         lexiconFile = new File(lexiconFilename);
         invlistsFile = new File(invlistFilename);
 
         this.lexiconInvlist = new HashMap<>();
 
+        this.compress = compress;
     }
 
 
@@ -70,7 +71,7 @@ public class InvIndexGenerator {
 
         for (String s : textData) {
             if (!lexiconInvlist.containsKey(s)) {
-                HashMap<Integer, Integer> newSet = new HashMap<>();
+                SortedMap<Integer, Integer> newSet = new TreeMap<>();
                 newSet.put(documentID, 1);
                 lexiconInvlist.put(s, newSet);
             }
@@ -104,7 +105,8 @@ public class InvIndexGenerator {
         // if the integer is 0, we still need 1 byte
         numBytes = numBytes > 0 ? numBytes : 1;
         byte[] output = new byte[numBytes];
-        System.out.println(Integer.toBinaryString((convertedInt & 0b1111111) | 0b10000000));
+        //System.out.print(input + " " + convertedInt + " " + (convertedInt >> 7) + " " + (convertedInt >> 14));
+        //System.out.print(Integer.toBinaryString((convertedInt & 0b1111111) | 0b10000000));
         // for each byte of output ...
         for(int i = 0; i < numBytes; i++) {
             // ... take the least significant 7 bits of input and set the MSB to 1 ...
@@ -115,6 +117,8 @@ public class InvIndexGenerator {
         }
         // finally reset the MSB on the last byte
         output[0] &= 0b01111111;
+
+
 
 
         /*String binaryRepresentation = Long.toBinaryString(input| 0x100000000L ).substring(1);
@@ -128,14 +132,14 @@ public class InvIndexGenerator {
         byte[] bytes = new byte[numBytes];
         String[] data = new String[numBytes];
 
-
+*/
         for (int i = 0; i < numBytes; i++) {
 
-            System.out.print(Integer.toBinaryString(output[i]) + " ");
+            System.out.print(Integer.toBinaryString(output[i] & 0b11111111) + " ");
 
-        }*/
+        }//*/
         System.out.println();
-        return null;
+        return output;
 
     }
 
@@ -157,7 +161,7 @@ public class InvIndexGenerator {
             for (String key : lexiconPairData.keySet()) {
                 bufferedWriter.write(key + " " + lexiconPairData.get(key) + "\n");
 
-                varByteConversion(lexiconPairData.get(key));
+                //varByteConversion(lexiconPairData.get(key));
             }
 
             bufferedWriter.flush();
@@ -177,6 +181,7 @@ public class InvIndexGenerator {
     }
 
 
+
     /**
      * Writes the numerical-binary data for the inverted list
      * @return returns the mapping of the words to pointer locations in the binary file
@@ -188,6 +193,11 @@ public class InvIndexGenerator {
         FileChannel fileChannel = null;
         StringBuilder stringBuilder;
         ByteBuffer byteBuffer;
+
+        int[] numbers;
+        int count;
+
+        int prev;
 
 
         try {
@@ -201,23 +211,44 @@ public class InvIndexGenerator {
                 Map<Integer, Integer> mappingData = lexiconInvlist.get(key);
                 lexiconPairData.put(key, fileChannel.position());
 
+                numbers = new int[mappingData.size()];
+                prev = 0;
+                //count = 0;
 
                 for (Integer documentID : mappingData.keySet()) {
 
+                    //numbers[count] = documentID;
+                    //System.out.print(documentID + " ");
+                    //numbers.add(documentID);
                     //stringBuilder.append(Integer.toBinaryString(documentID));
-                    stringBuilder.append(Long.toBinaryString( Integer.toUnsignedLong(documentID) | 0x100000000L ).substring(1));
-
+                    stringBuilder.append(( documentID - prev));//Integer.toUnsignedLong(documentID - prev) | 0x100000000L ).substring(1));
                     stringBuilder.append(" ");
                     //stringBuilder.append(Integer.toBinaryString(mappingData.get(documentID)));
                     stringBuilder.append(Long.toBinaryString( Integer.toUnsignedLong(mappingData.get(documentID)) | 0x100000000L ).substring(1));
 
                     stringBuilder.append(" ");
 
+                    prev = documentID;
+
+                    //count++;
                     if (documentID >= 256 | mappingData.get(documentID) >= 256) {
                         System.out.println(documentID + " " + mappingData.get(documentID));
                     }
 
                 }
+                //System.out.println();
+               ///System.out.print("Presort: ");
+
+
+                /*for (int i : numbers) {
+                    //System.out.print(i + " ");
+                    stringBuilder.append((this.compress) ? i - prev : i);
+                    stringBuilder.append(" ");
+                    stringBuilder.append(mappingData.get(i));
+                    stringBuilder.append(" ");
+                    prev = i;
+                }*/
+
 
                 stringBuilder.append("\n");
                 byteBuffer = ByteBuffer.wrap(stringBuilder.toString().getBytes(StandardCharsets.UTF_8));
