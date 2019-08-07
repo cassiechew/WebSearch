@@ -174,7 +174,11 @@ public class DocumentHandler {
 
         File stoplistFile = new File (stoplist);
 
-        
+        if(!stoplistFile.exists() && !stoplistFile.isDirectory()) {
+            System.out.println("This stoplist file does not exist!");
+            System.exit(1);
+        }
+
 
         this.hasStopFile = true;
         this.stoplistHashtable = new Hashtable<>();

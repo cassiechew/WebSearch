@@ -1,6 +1,5 @@
 #!/usr/bin/env sh
 
-
 if [ ! -d "./out/" ]; then
   mkdir "out"
 fi
