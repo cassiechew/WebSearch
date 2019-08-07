@@ -4,6 +4,9 @@ package util;
 import util.strategy.Strategy;
 import util.strategy.VariableByte;
 
+import java.util.List;
+import java.util.Map;
+
 
 /**
  * A context class to contain the compression strategies used in the program
@@ -44,9 +47,9 @@ public class Compressor {
     /**
      * Calls the decompress method in the strategy
      * @param input The binary string to decompress
-     * @return The number gained from the decompression
+     * @return The mapped data gained from the decompression
      */
-    public int decompress (String input) {
-        return strategy.decompress(input);
+    public Map<String, Map<Integer, Integer>> decompress (String input, List<LexMapping> lexiconData) {
+        return strategy.decompress(input, lexiconData);
     }
 }

@@ -1,6 +1,11 @@
 package util.strategy;
 
 
+import util.LexMapping;
+
+import java.util.List;
+import java.util.Map;
+
 /**
  * An interface to contain the methods needed to compress/decompress files to allow for different strategies of
  * compression/decompression
@@ -20,5 +25,5 @@ public interface Strategy {
      * @param input The string to decompress
      * @return The number gained from the decompression
      */
-    int decompress(String input);
+    Map<String, Map<Integer, Integer>> decompress(String input, List<LexMapping> word);
 }

@@ -1,6 +1,12 @@
 package util.strategy;
 
 
+import util.LexMapping;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Variable byte compression/decompression strategy for use
  */
@@ -41,8 +47,25 @@ public class VariableByte implements Strategy {
     }
 
 
+    /**
+     * Variable byte decompression
+     * @param input The invlist string to decompress
+     * @return
+     */
+    public Map<String, Map<Integer, Integer>> decompress(String input, List<LexMapping> words) {
 
-    public int decompress(String input) {
+        Map<String, Map<Integer, Integer>> output = new HashMap<>();
+        char[] data = input.toCharArray();
+
+        final int byteLength = 8;
+
+        boolean checkCurrentInt;
+        boolean isDocument = true;
+
+        int counter = byteLength;
+        int currentOffset = 0;
+
+        StringBuilder sb = new StringBuilder();
 
         // Assume string is 011001001001011010010101
         //                  I       I       I
@@ -52,8 +75,44 @@ public class VariableByte implements Strategy {
             2. When file pointer is reached, call this function and send in word and integer string
          */
 
+        for (LexMapping l : words) {
+            Map<Integer, Integer> documentMapping = new HashMap<>();
+            int realDocID = 0;
 
-        return 0;
+            int documentID = -1;
+            int frequency = -1;
+
+            for (int i = currentOffset; i < l.getOffset(); i++) {
+
+                checkCurrentInt = currentOffset % byteLength == 0;
+
+
+                if (checkCurrentInt && (i != 0)) {
+                    if (isDocument) {
+                        documentID = singleDecompress(sb.toString());
+                    }
+                    else {
+                        frequency = singleDecompress(sb.toString());
+                    }
+                    isDocument = !isDocument;
+
+                }
+
+                if (documentID >=0 && frequency >= 0) {
+                    documentMapping.put(documentID, frequency);
+                    documentID = -1;
+                    frequency = -1;
+                }
+                sb.append(data[i]);
+                currentOffset++;
+            }
+
+            output.put(l.getWord(), documentMapping);
+
+        }
+
+
+        return output;
 
     }
 

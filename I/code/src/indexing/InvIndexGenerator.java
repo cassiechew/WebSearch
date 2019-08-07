@@ -119,6 +119,7 @@ public class InvIndexGenerator {
         Map<String, Long> lexiconPairData;
 
         lexiconPairData = writeInvertedListData();
+        lexiconPairData.remove("");
         writeLexiconData(lexiconPairData);
 
         //System.out.println(varByteConversion(93823132));
