@@ -24,6 +24,8 @@ public class Compressed_Index {
 
     private static String currentFile  = null;
     private static String stopfile     = null;
+    private static String compressionStrategy   = null;
+
 
     public static void main (String[] args) {
 
@@ -56,7 +58,7 @@ public class Compressed_Index {
         System.out.println("Parsing complete!");
 
         System.out.println("Initializing index generator...");
-        invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME);
+        invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME, true, "varbyte");
 
         System.out.println("Indexing data...");
         invIndexGenerator.createList(parsedData);

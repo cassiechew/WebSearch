@@ -19,7 +19,6 @@ public class DocumentFactory {
      */
     public DocumentFactory (Map<Integer, Document> documentRegistry) {
         super();
-
         this.documentRegistry = documentRegistry;
     }
 
@@ -30,9 +29,7 @@ public class DocumentFactory {
      * @param document THe document to register
      */
     void registerDocument(Integer documentID, Document document) {
-
         this.documentRegistry.put(documentID, document);
-
     }
 
 
@@ -54,6 +51,4 @@ public class DocumentFactory {
     public Map<Integer, Document> getDocumentRegistry () {
         return this.documentRegistry;
     }
-
-
 }

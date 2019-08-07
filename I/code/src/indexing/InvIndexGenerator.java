@@ -1,14 +1,13 @@
 package indexing;
 
+import util.Compressor;
 import util.Document;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -24,17 +23,44 @@ public class InvIndexGenerator {
     /** Contains the inverted list information, consisting only of numerical data */
     private File invlistsFile;
 
+    /** The compressor that will be used to handle all compression/decompression of data */
+    private Compressor compressor;
 
+    /** Flag to determine whether compression will be used or not */
+    private boolean compress;
+
+    /** The internal representation of the lexicon-inverted list */
     private Map<String, Map<Integer, Integer>> lexiconInvlist;
 
 
-    public InvIndexGenerator (String lexiconFilename, String invlistFilename) {
+    public InvIndexGenerator (String lexiconFilename, String invlistFilename, boolean compress,
+                              String compressionStrategy) {
 
         lexiconFile = new File(lexiconFilename);
         invlistsFile = new File(invlistFilename);
 
         this.lexiconInvlist = new HashMap<>();
 
+        this.compress = compress;
+
+        compressor = (compress) ? new Compressor(compressionStrategy) : null;
+        clearFiles();
+    }
+
+
+    /**
+     * A quick method to remove remaining file data
+     */
+    private void clearFiles () {
+        try (
+                PrintWriter printWriter = new PrintWriter(invlistsFile);
+                PrintWriter secondPrintWriter = new PrintWriter(lexiconFile)
+        ) {
+            printWriter.write("");
+            secondPrintWriter.write("");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -54,9 +80,6 @@ public class InvIndexGenerator {
 
         lexiconInvlist.remove("");
 
-            //store document number, frequency it appears here
-
-        //System.out.println(lexiconInvlist.toString());
     }
 
 
@@ -70,7 +93,7 @@ public class InvIndexGenerator {
 
         for (String s : textData) {
             if (!lexiconInvlist.containsKey(s)) {
-                HashMap<Integer, Integer> newSet = new HashMap<>();
+                SortedMap<Integer, Integer> newSet = new TreeMap<>();
                 newSet.put(documentID, 1);
                 lexiconInvlist.put(s, newSet);
             }
@@ -94,50 +117,14 @@ public class InvIndexGenerator {
         Map<String, Long> lexiconPairData;
 
         lexiconPairData = writeInvertedListData();
+        lexiconPairData.remove("");
         writeLexiconData(lexiconPairData);
+
+        //System.out.println(varByteConversion(93823132));
     }
 
 
-    private byte[] varByteConversion (long input) {
-        int convertedInt = (int) input;
-        int numBytes = ((32 - Integer.numberOfLeadingZeros(convertedInt)) + 6) / 7;
-        // if the integer is 0, we still need 1 byte
-        numBytes = numBytes > 0 ? numBytes : 1;
-        byte[] output = new byte[numBytes];
-        System.out.println(Integer.toBinaryString((convertedInt & 0b1111111) | 0b10000000));
-        // for each byte of output ...
-        for(int i = 0; i < numBytes; i++) {
-            // ... take the least significant 7 bits of input and set the MSB to 1 ...
-            output[i] = (byte) ((convertedInt & 0b1111111) | 0b10000000);
-            // ... shift the input right by 7 places, discarding the 7 bits we just used
-            //System.out.print(Integer.toBinaryString(output[i]) + " ");
-            convertedInt >>= 7;
-        }
-        // finally reset the MSB on the last byte
-        output[0] &= 0b01111111;
 
-
-        /*String binaryRepresentation = Long.toBinaryString(input| 0x100000000L ).substring(1);
-        //System.out.println(binaryRepresentation);
-
-        System.out.println(0b110100101010 + " " + (0b110100101010 >> 7));
-
-
-        int numBytes = ((int) Math.ceil(((double)binaryRepresentation.length()) / 7.0));
-
-        byte[] bytes = new byte[numBytes];
-        String[] data = new String[numBytes];
-
-
-        for (int i = 0; i < numBytes; i++) {
-
-            System.out.print(Integer.toBinaryString(output[i]) + " ");
-
-        }*/
-        System.out.println();
-        return null;
-
-    }
 
 
     /**
@@ -146,35 +133,22 @@ public class InvIndexGenerator {
      */
     private void writeLexiconData (Map<String, Long> lexiconPairData) {
 
-        FileWriter fileWriter = null;
-        BufferedWriter bufferedWriter = null;
-
-        try {
-
-            fileWriter = new FileWriter(lexiconFile);
-            bufferedWriter = new BufferedWriter(fileWriter);
+        try (
+                FileWriter fileWriter = new FileWriter(lexiconFile);
+                BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)
+        ){
 
             for (String key : lexiconPairData.keySet()) {
                 bufferedWriter.write(key + " " + lexiconPairData.get(key) + "\n");
-
-                varByteConversion(lexiconPairData.get(key));
             }
 
             bufferedWriter.flush();
-            bufferedWriter.close();
 
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                assert bufferedWriter != null;
-                bufferedWriter.close();
-                fileWriter.close();
-            } catch (IOException e ) {
-                e.printStackTrace();
-            }
         }
     }
+
 
 
     /**
@@ -184,16 +158,16 @@ public class InvIndexGenerator {
     private Map<String, Long> writeInvertedListData () {
 
         Map<String, Long> lexiconPairData = new HashMap<>();
-        RandomAccessFile invlistRAFile;
-        FileChannel fileChannel = null;
         StringBuilder stringBuilder;
         ByteBuffer byteBuffer;
 
+        int prev;
 
-        try {
+        try (
+                RandomAccessFile invlistRAFile = new RandomAccessFile(invlistsFile, "rw");
+                FileChannel fileChannel = invlistRAFile.getChannel()
+        ){
 
-            invlistRAFile = new RandomAccessFile(invlistsFile, "rw");
-            fileChannel = invlistRAFile.getChannel();
             stringBuilder = new StringBuilder();
 
             for (String key: lexiconInvlist.keySet()
@@ -201,47 +175,28 @@ public class InvIndexGenerator {
                 Map<Integer, Integer> mappingData = lexiconInvlist.get(key);
                 lexiconPairData.put(key, fileChannel.position());
 
+                prev = 0;
 
                 for (Integer documentID : mappingData.keySet()) {
 
-                    //stringBuilder.append(Integer.toBinaryString(documentID));
-                    stringBuilder.append(Long.toBinaryString( Integer.toUnsignedLong(documentID) | 0x100000000L ).substring(1));
-
-                    stringBuilder.append(" ");
-                    //stringBuilder.append(Integer.toBinaryString(mappingData.get(documentID)));
-                    stringBuilder.append(Long.toBinaryString( Integer.toUnsignedLong(mappingData.get(documentID)) | 0x100000000L ).substring(1));
-
-                    stringBuilder.append(" ");
-
-                    if (documentID >= 256 | mappingData.get(documentID) >= 256) {
-                        System.out.println(documentID + " " + mappingData.get(documentID));
-                    }
+                    stringBuilder.append((this.compress) ? compressor.compress( documentID - prev) :
+                            Long.toBinaryString(Integer.toUnsignedLong(documentID) | 0x100000000L ).substring(1));
+                    stringBuilder.append((this.compress) ? compressor.compress(
+                            Integer.toUnsignedLong(mappingData.get(documentID))) :
+                            Long.toBinaryString( Integer.toUnsignedLong(mappingData.get(documentID)) | 0x100000000L )
+                                    .substring(1));
+                    prev = documentID;
 
                 }
 
-                stringBuilder.append("\n");
                 byteBuffer = ByteBuffer.wrap(stringBuilder.toString().getBytes(StandardCharsets.UTF_8));
                 fileChannel.write(byteBuffer);
                 stringBuilder.setLength(0);
 
             }
-
-
-
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                assert fileChannel != null;
-                fileChannel.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
-
         return lexiconPairData;
     }
-
-
-
 }
