@@ -1,9 +1,9 @@
 Ryan Chew (s3714984)
 Jin Zeng (s3688213)
 
-To compile this program, run the makefile
+To compile this program, run the compile script
 
-    %. make
+    %. ./compile
 
 Usage: Index [-p|--print] [-s|-stoplist <src>] [-t, --time]
                 [-c, --compress <strategy>] [-h, --help] <source file>
