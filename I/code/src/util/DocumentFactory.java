@@ -19,7 +19,6 @@ public class DocumentFactory {
      */
     public DocumentFactory (Map<Integer, Document> documentRegistry) {
         super();
-
         this.documentRegistry = documentRegistry;
     }
 

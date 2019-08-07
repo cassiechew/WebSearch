@@ -73,7 +73,6 @@ public class DocumentHandler {
         try (
                 FileReader fileReader = new FileReader(this.currentFile);
                 BufferedReader reader = new BufferedReader(fileReader);
-
         ){
 
             while ((buffer = reader.readLine()) != null) {
@@ -175,6 +174,8 @@ public class DocumentHandler {
 
         File stoplistFile = new File (stoplist);
 
+        
+
         this.hasStopFile = true;
         this.stoplistHashtable = new Hashtable<>();
 
@@ -273,7 +274,7 @@ public class DocumentHandler {
 
 
         try (
-                FileWriter fw = new FileWriter(outfile);
+                FileWriter fw = new FileWriter(outfile)
         ){
 
             /*if (!outfile.isFile() && !outfile.createNewFile())

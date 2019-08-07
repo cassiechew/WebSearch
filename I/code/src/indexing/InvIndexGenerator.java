@@ -2,8 +2,6 @@ package indexing;
 
 import util.Compressor;
 import util.Document;
-import util.strategy.Strategy;
-import util.strategy.VariableByte;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -167,7 +165,7 @@ public class InvIndexGenerator {
 
         try (
                 RandomAccessFile invlistRAFile = new RandomAccessFile(invlistsFile, "rw");
-                FileChannel fileChannel = invlistRAFile.getChannel();
+                FileChannel fileChannel = invlistRAFile.getChannel()
         ){
 
             stringBuilder = new StringBuilder();

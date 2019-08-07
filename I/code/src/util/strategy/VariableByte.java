@@ -51,7 +51,7 @@ public class VariableByte implements Strategy {
     /**
      * Variable byte decompression
      * @param input The invlist string to decompress
-     * @return
+     * @return The internal inverted list map
      */
     public Map<String, Map<Integer, Integer>> decompress(String input, List<LexMapping> words) {
 
@@ -123,16 +123,18 @@ public class VariableByte implements Strategy {
     }
 
 
+    /**
+     * Decompressing algorithm for a single digit
+     * @param input The binary string representation of the compressed data
+     * @return The decompressed integer
+     */
     private int singleDecompress (String input) {
         int lengthOfString = input.length();
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < (lengthOfString/VARBYTELENGTHFULL); i++) {
-
             sb.append(String.valueOf(input.toCharArray(), i * VARBYTELENGTHFULL, VARBYTELENGTHFULL));
-
         }
-
         return Integer.parseInt(sb.toString(),2);
     }
 }

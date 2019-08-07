@@ -27,8 +27,6 @@ public class Compressor {
                 System.out.println("You have not entered a valid strategy! -> " + strategy);
                 System.exit(1);
         }
-
-
     }
 
 
@@ -38,9 +36,7 @@ public class Compressor {
      * @return The compressed binary string of the inputted number
      */
     public String compress (long input) {
-
          return strategy.compress(input);
-
     }
 
 
