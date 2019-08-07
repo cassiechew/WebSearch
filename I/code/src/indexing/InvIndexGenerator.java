@@ -81,6 +81,7 @@ public class InvIndexGenerator {
         }
 
         lexiconInvlist.remove("");
+
     }
 
 
@@ -179,8 +180,12 @@ public class InvIndexGenerator {
 
                 for (Integer documentID : mappingData.keySet()) {
 
-                    stringBuilder.append((this.compress) ? compressor.compress( documentID - prev) : Long.toBinaryString(Integer.toUnsignedLong(documentID) | 0x100000000L ).substring(1));//Integer.toUnsignedLong(documentID - prev) | 0x100000000L ).substring(1));
-                    stringBuilder.append((this.compress) ? compressor.compress( Integer.toUnsignedLong(mappingData.get(documentID))) : Long.toBinaryString( Integer.toUnsignedLong(mappingData.get(documentID)) | 0x100000000L ).substring(1));
+                    stringBuilder.append((this.compress) ? compressor.compress( documentID - prev) :
+                            Long.toBinaryString(Integer.toUnsignedLong(documentID) | 0x100000000L ).substring(1));
+                    stringBuilder.append((this.compress) ? compressor.compress(
+                            Integer.toUnsignedLong(mappingData.get(documentID))) :
+                            Long.toBinaryString( Integer.toUnsignedLong(mappingData.get(documentID)) | 0x100000000L )
+                                    .substring(1));
                     prev = documentID;
 
                 }

@@ -6,6 +6,9 @@ package util.strategy;
  */
 public class VariableByte implements Strategy {
 
+    private static final int INTEGERBYTELENGTH  = 32;
+    private static final int VARBYTELENGTH      = 7;
+    private static final int VARBYTELENGTHFULL  = 8;
 
     /**
      * Variable byte compression algorithm implementation
@@ -14,7 +17,8 @@ public class VariableByte implements Strategy {
      */
     public String compress(long input) {
         int convertedInt = (int) input;
-        int numBytes = ((32 - Integer.numberOfLeadingZeros(convertedInt)) + 6) / 7;
+        int numBytes = ((INTEGERBYTELENGTH - Integer.numberOfLeadingZeros(convertedInt))
+                + (VARBYTELENGTH - 1)) / VARBYTELENGTH;
 
         /* if the integer is 0, we still need 1 byte */
         numBytes = (numBytes > 0) ? numBytes : 1;
@@ -27,7 +31,7 @@ public class VariableByte implements Strategy {
             sb.append(Integer.toBinaryString((convertedInt & 0b1111111) | 0b10000000));
 
             /* Shift the input right by 7 places */
-            convertedInt >>= 7;
+            convertedInt >>= VARBYTELENGTH;
         }
 
         /*reset the MSB on the last byte */
@@ -39,6 +43,31 @@ public class VariableByte implements Strategy {
 
 
     public int decompress(String input) {
+
+        // Assume string is 011001001001011010010101
+        //                  I       I       I
+
+        /*
+            1. While reading invlist file, decompress, using stored file pointers from lexicon.
+            2. When file pointer is reached, call this function and send in word and integer string
+         */
+
+
         return 0;
+
+    }
+
+
+    private int singleDecompress (String input) {
+        int lengthOfString = input.length();
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < (lengthOfString/VARBYTELENGTHFULL); i++) {
+
+            sb.append(String.valueOf(input.toCharArray(), i * VARBYTELENGTHFULL, VARBYTELENGTHFULL));
+
+        }
+
+        return Integer.parseInt(sb.toString(),2);
     }
 }
