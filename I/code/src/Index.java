@@ -26,8 +26,9 @@ public class Index {
 
     private static List<Document> parsedData;
 
-    private static String currentFile  = null;
-    private static String stopfile     = null;
+    private static String currentFile           = null;
+    private static String stopfile              = null;
+    private static String compressionStrategy   = null;
 
     public static void main (String[] args) {
 
@@ -62,7 +63,7 @@ public class Index {
         System.out.println("Parsing complete!");
 
         System.out.println("Initializing index generator...");
-        invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME, compress);
+        invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME, compress, compressionStrategy);
 
         System.out.println("Indexing data...");
         invIndexGenerator.createList(parsedData);
@@ -81,7 +82,7 @@ public class Index {
 
         if (timed) {
             final long end = System.currentTimeMillis();
-            System.out.println("Total excecution time: " + (end - start));
+            System.out.println("Total execution time: " + (end - start));
         }
 
         System.out.println("Inverted index completed!");
@@ -101,6 +102,17 @@ public class Index {
             System.out.println(parsedData.get(parsedData.indexOf(d)).getTextData());
             System.out.println();
         }
+    }
+
+
+    /**
+     * Exits the program after a failure
+     * @param arg The argument to reference for failure
+     */
+    private static void exit(String arg) {
+        System.err.println("Missing file for " + arg);
+        usage();
+        System.exit(FAILURE);
     }
 
 
@@ -127,20 +139,31 @@ public class Index {
             if (args[i].equals("-c") | args[i].equals("--compress")) {
                 compress = true;
                 opsArray[i] = true;
-                opsCount++;
+                if (args.length <= i+1) {
+                    exit(args[i]);
+                }
+                else if (args[i+1].startsWith("-")) {
+                    exit(args[i]);
+                }
+                compressionStrategy = args[i+1];
+                opsArray[i+1] = true;
+
+                opsCount = opsCount + 2;
                 continue;
             }
             if (args[i].equals("-s") | args[i].equals("--stoplist")) {
                 hasStoplist = true;
                 opsArray[i] = true;
-                if (args.length <= i+1 | args[i+1].startsWith("-")) {
-                    System.err.println("Missing file for " + args[i]);
+                if (args.length <= i+1) {
+                    exit(args[i]);
+                }
+                else if (args[i+1].startsWith("-")) {
+                    exit(args[i]);
                 }
                 stopfile = args[i+1];
                 opsArray[i+1] = true;
 
                 opsCount = opsCount + 2;
-
                 continue;
             }
             if (args[i].equals("-t") | args[i].equals("--time")) {
@@ -166,7 +189,7 @@ public class Index {
      */
     private static void usage() {
         System.out.println("Usage: Index [-p|--print] [-s|-stoplist <src>] [-t, --time]\n" +
-                           "          [-c, --compress] [-h, --help] <source file>");
+                           "          [-c, --compress <strategy>] [-h, --help] <source file>");
         System.out.println("Creates an inverted index of the supplied document");
         System.out.println("Options:");
         System.out.println("  -p, --print            Prints the cleaned text");
@@ -174,5 +197,10 @@ public class Index {
         System.out.println("  -t, --time             Times the excecution time");
         System.out.println("  -c, --compress         Use variable byte compression");
         System.out.println("  -h, --help             Prints this help message and exits");
+        System.out.println();
+        System.out.println("Strategies:");
+        System.out.println("  varbyte         ->     Variable Byte Compression");
+
+
     }
 }

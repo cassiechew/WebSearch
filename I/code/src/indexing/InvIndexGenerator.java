@@ -1,6 +1,9 @@
 package indexing;
 
+import util.Compressor;
 import util.Document;
+import util.strategy.Strategy;
+import util.strategy.VariableByte;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -22,13 +25,18 @@ public class InvIndexGenerator {
     /** Contains the inverted list information, consisting only of numerical data */
     private File invlistsFile;
 
+    /** The compressor that will be used to handle all compression/decompression of data */
+    private Compressor compressor;
+
+    /** Flag to determine whether compression will be used or not */
     private boolean compress;
 
-
+    /** The internal representation of the lexicon-inverted list */
     private Map<String, Map<Integer, Integer>> lexiconInvlist;
 
 
-    public InvIndexGenerator (String lexiconFilename, String invlistFilename, boolean compress) {
+    public InvIndexGenerator (String lexiconFilename, String invlistFilename, boolean compress,
+                              String compressionStrategy) {
 
         lexiconFile = new File(lexiconFilename);
         invlistsFile = new File(invlistFilename);
@@ -37,10 +45,14 @@ public class InvIndexGenerator {
 
         this.compress = compress;
 
+        compressor = (compress) ? new Compressor(compressionStrategy) : null;
         clearFiles();
     }
 
 
+    /**
+     * A quick method to remove remaining file data
+     */
     private void clearFiles () {
         try (
                 PrintWriter printWriter = new PrintWriter(invlistsFile);
@@ -69,10 +81,6 @@ public class InvIndexGenerator {
         }
 
         lexiconInvlist.remove("");
-
-            //store document number, frequency it appears here
-
-        //System.out.println(lexiconInvlist.toString());
     }
 
 
@@ -111,53 +119,12 @@ public class InvIndexGenerator {
 
         lexiconPairData = writeInvertedListData();
         writeLexiconData(lexiconPairData);
+
+        //System.out.println(varByteConversion(93823132));
     }
 
 
-    private String varByteConversion (long input) {
-        int convertedInt = (int) input;
-        int numBytes = ((32 - Integer.numberOfLeadingZeros(convertedInt)) + 6) / 7;
-        // if the integer is 0, we still need 1 byte
-        numBytes = numBytes > 0 ? numBytes : 1;
-        //byte[] output = new byte[numBytes];
-        StringBuilder sb = new StringBuilder();
-        //System.out.print(input + " " + convertedInt + " " + (convertedInt >> 7) + " " + (convertedInt >> 14));
-        //System.out.print(Integer.toBinaryString((convertedInt & 0b1111111) | 0b10000000));
-        // for each byte of output ...
-        for(int i = 0; i < numBytes; i++) {
-            // ... take the least significant 7 bits of input and set the MSB to 1 ...
-            //output[i] = (byte)
-            sb.append(Integer.toBinaryString((convertedInt & 0b1111111) | 0b10000000));
-            // ... shift the input right by 7 places, discarding the 7 bits we just used
-            //System.out.print(Integer.toBinaryString(output[i]) + " ");
-            convertedInt >>= 7;
-        }
-        // finally reset the MSB on the last byte
-        //output[0] &= 0b01111111;
-        sb.replace(0, 1, "0");
 
-        //System.out.println(input + " (" + numBytes + ") -> " + sb.toString());
-
-        /*String binaryRepresentation = Long.toBinaryString(input| 0x100000000L ).substring(1);
-        //System.out.println(binaryRepresentation);
-
-        System.out.println(0b110100101010 + " " + (0b110100101010 >> 7));
-
-
-        int numBytes = ((int) Math.ceil(((double)binaryRepresentation.length()) / 7.0));
-
-        byte[] bytes = new byte[numBytes];
-        String[] data = new String[numBytes];
-
-*/
-        //for (int i = 0; i < numBytes; i++) {
-
-            //System.out.print(Integer.toBinaryString(output[i] & 0b11111111) + " ");
-
-       // }//*/
-        //System.out.println();
-        return sb.toString();
-    }
 
 
     /**
@@ -212,8 +179,8 @@ public class InvIndexGenerator {
 
                 for (Integer documentID : mappingData.keySet()) {
 
-                    stringBuilder.append((this.compress) ? varByteConversion( documentID - prev) : Long.toBinaryString(Integer.toUnsignedLong(documentID) | 0x100000000L ).substring(1));//Integer.toUnsignedLong(documentID - prev) | 0x100000000L ).substring(1));
-                    stringBuilder.append((this.compress) ? varByteConversion( Integer.toUnsignedLong(mappingData.get(documentID))) : Long.toBinaryString( Integer.toUnsignedLong(mappingData.get(documentID)) | 0x100000000L ).substring(1));
+                    stringBuilder.append((this.compress) ? compressor.compress( documentID - prev) : Long.toBinaryString(Integer.toUnsignedLong(documentID) | 0x100000000L ).substring(1));//Integer.toUnsignedLong(documentID - prev) | 0x100000000L ).substring(1));
+                    stringBuilder.append((this.compress) ? compressor.compress( Integer.toUnsignedLong(mappingData.get(documentID))) : Long.toBinaryString( Integer.toUnsignedLong(mappingData.get(documentID)) | 0x100000000L ).substring(1));
                     prev = documentID;
 
                 }
