@@ -1,5 +1,3 @@
-
-
 import indexing.DocumentHandler;
 import indexing.InvIndexGenerator;
 import util.Document;
@@ -107,7 +105,7 @@ public class Index {
      */
     private static void opsHandler (String[] args) {
 
-        boolean[] opsArray  = new boolean[args.length];
+        boolean[] opsArray  = new boolean[args.length]; //dynamic placement of args
         int opsCount        = 0;
 
         for (int i = 0; i < args.length; i++) {
