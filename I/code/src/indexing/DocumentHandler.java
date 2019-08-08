@@ -53,9 +53,9 @@ public class DocumentHandler {
      * Quick word processing method
      * @return An arraylist of the produced documents from the infile
      */
-    public ArrayList<Document> readFile() {
+    public List<Document> readFile() {
 
-        ArrayList<Document> documentArrayList = new ArrayList<>();
+        List<Document> documentList = new Vector<>();
 
         StringBuilder documentNo = new StringBuilder();
         StringBuilder header = new StringBuilder();
@@ -77,12 +77,12 @@ public class DocumentHandler {
 
             while ((buffer = reader.readLine()) != null) {
 
-                //System.out.print("Processing: " + (documentArrayList.size() + 1) + " Documents read... " + "\r");
+                //System.out.print("Processing: " + (documentList.size() + 1) + " Documents read... " + "\r");
 
 
                 /* This checks if the document has ended and will generate a document object */
                 if (buffer.equals(SwitchTags.CLOSEDOC.getText())) {
-                    documentArrayList.add(this.documentFactory.createDocument(
+                    documentList.add(this.documentFactory.createDocument(
                             documentNo.toString(),
                             (hasStopFile) ? stoppingFunction(header) : header.toString(),
                             (hasStopFile) ? stoppingFunction(textData) : textData.toString()));
@@ -138,7 +138,7 @@ public class DocumentHandler {
         }
 
         syncDataMap();
-        return documentArrayList;
+        return documentList;
 
     }
 
@@ -181,7 +181,7 @@ public class DocumentHandler {
 
 
         this.hasStopFile = true;
-        this.stoplistHashtable = new Hashtable<>();
+        this.stoplistHashtable = new HashMap<>();
 
         try (
                 FileReader fileReader = new FileReader(stoplistFile);
@@ -190,9 +190,9 @@ public class DocumentHandler {
             String buffer;
 
             while ((buffer = bufferedReader.readLine()) != null) {
-                this.stoplistHashtable.put(hashString(buffer), buffer);
+                this.stoplistHashtable.put(buffer, null);
             }
-        } catch (IOException | NoSuchAlgorithmException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -202,6 +202,7 @@ public class DocumentHandler {
      * A hashing function for strings
      * @param s The string to hash
      */
+    @Deprecated
     private String hashString(String s)
     throws NoSuchAlgorithmException {
 
@@ -229,20 +230,18 @@ public class DocumentHandler {
     private String stoppingFunction (StringBuilder textData) {
 
         String[] textArray = textData.toString().split(" ");
-        String hash;
+        //String hash;
 
-        try {
-            for (int i = 0; i < textArray.length; i++) {
 
-                hash = hashString(textArray[i]);
+        for (int i = 0; i < textArray.length; i++) {
 
-                if (this.stoplistHashtable.containsKey(hash)) {
-                    textArray[i] = "";
-                }
+            //hash = hashString(textArray[i]);
+
+            if (this.stoplistHashtable.containsKey(textArray[i])) {
+                textArray[i] = "";
             }
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
         }
+
 
         return String.join(" ", textArray).replaceAll("\\s+", " ")
                 .replaceAll("^\\s+|$\\s+", "");
