@@ -31,11 +31,13 @@ public class VariableByte implements Strategy {
         numBytes = (numBytes > 0) ? numBytes : 1;
         StringBuilder sb = new StringBuilder();
 
+
+
         /* Process each byte in the number */
         for(int i = 0; i < numBytes; i++) {
 
             /* Take the least significant 7 bits of input and set the MSB to 1 */
-            sb.append(Integer.toBinaryString((convertedInt & 0b1111111) | 0b10000000));
+            sb.insert(0, Integer.toBinaryString((convertedInt & 0b1111111) | 0b10000000));
 
             /* Shift the input right by 7 places */
             convertedInt >>= VARBYTELENGTH;
@@ -57,7 +59,29 @@ public class VariableByte implements Strategy {
 
         Map<String, Map<Integer, Integer>> output = new HashMap<>();
 
+        String[] data = input.split("(?<=\\G........)");
+        final int byteLength = 8;
+
+        int currentOffset = 0;
+
+        for (LexMapping lm : words) {
+
+            Map<Integer, Integer> documentMapping = new HashMap<>();
+
+
+            for (int i = 0; i < data.length; i++) {
+                if (true) {
+
+                }
+
+                currentOffset += byteLength;
+            }
+
+
+        }
+        /*
         try {
+
             final Field field = String.class.getDeclaredField("value");
             field.setAccessible(true);
 
@@ -80,6 +104,7 @@ public class VariableByte implements Strategy {
                 1. While reading invlist file, decompress, using stored file pointers from lexicon.
                 2. When file pointer is reached, call this function and send in word and integer string
              */
+            /*
 
             for (LexMapping l : words) {
                 Map<Integer, Integer> documentMapping = new HashMap<>();
@@ -118,6 +143,7 @@ public class VariableByte implements Strategy {
         } catch (NoSuchFieldException | IllegalAccessException e) {
             e.printStackTrace();
         }
+        */
 
         return output;
     }

@@ -137,9 +137,19 @@ public class InvIndexGenerator {
                 FileWriter fileWriter = new FileWriter(lexiconFile);
                 BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)
         ){
+            StringBuilder sb = new StringBuilder();
 
             for (String key : lexiconPairData.keySet()) {
-                bufferedWriter.write(key + " " + lexiconPairData.get(key) + "\n");
+
+                sb.append(key);
+                sb.append(" ");
+                sb.append(lexiconInvlist.get(key).size());
+                sb.append(" ");
+                sb.append(lexiconPairData.get(key));
+                sb.append("\n");
+
+                bufferedWriter.write(sb.toString());
+                sb.setLength(0);
             }
 
             bufferedWriter.flush();
@@ -199,4 +209,5 @@ public class InvIndexGenerator {
         }
         return lexiconPairData;
     }
+
 }
