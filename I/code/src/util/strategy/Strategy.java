@@ -17,7 +17,7 @@ public interface Strategy {
      * @param input The number to be compressed into a binary string
      * @return The binary string to return
      */
-    String compress(long input);
+    byte[] compress(int input);
 
 
     /**
