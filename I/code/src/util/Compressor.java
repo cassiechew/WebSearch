@@ -35,7 +35,7 @@ public class Compressor {
      * @param input The number to compress
      * @return The compressed binary string of the inputted number
      */
-    public String compress (long input) {
+    public byte[] compress (int input) {
          return strategy.compress(input);
     }
 
