@@ -154,12 +154,12 @@ public class DocumentHandler {
                 .toLowerCase().replaceAll("n't", " not")
                 .replaceAll("'re", " are").replaceAll("'m", " am")
                 .replaceAll("'ll", " will").replaceAll("'ve", " have")
-                .replaceAll("\\.|'s", "")
-                .replaceAll("\\p{Punct}", " ");
+                .replaceAll("'s", "")
+                .replaceAll("(?!,)\\p{Punct}", " ").replaceAll("(?<!\\S)\\p{Punct}+|\\p{Punct}+(?!\\S)", " ");
         //.replaceAll("-|;|/|\\(|=|:", " ");
 
         //.replaceAll("'s", "")//.replaceAll("(?<=\\w{3})\\.(?=\\w{3})", " ")
-                //                .replaceAll("(?<!\\S)\\p{Punct}+|\\p{Punct}+(?!\\S)", " ")
+                //
     }
 
 
