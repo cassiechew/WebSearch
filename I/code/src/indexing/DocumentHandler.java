@@ -51,7 +51,7 @@ public class DocumentHandler {
      * Quick word processing method
      * @return An arraylist of the produced documents from the infile
      */
-    public List<Document> readFile() {
+    public List<Document> readFile() {   //read file and map doc ID (0,1,2....) to docNo
 
         List<Document> documentList = new Vector<>();
 
@@ -141,6 +141,7 @@ public class DocumentHandler {
     }
 
 
+
     /**
      * A quick function to tokenize and normalize a block of text
      * @param buffer The block of text to process
@@ -151,8 +152,8 @@ public class DocumentHandler {
                 .toLowerCase().replaceAll("n't", " not")
                 .replaceAll("'re", " are").replaceAll("'m", " am")
                 .replaceAll("'ll", " will").replaceAll("'ve", " have")
-                .replaceAll("'s", "").replaceAll("(?<=\\w{3})\\.(?=\\w{3})", " ")
-                .replaceAll("\\.", "").replaceAll("-", " ");
+                //.replaceAll("'s", "")//.replaceAll("(?<=\\w{3})\\.(?=\\w{3})", " ")
+                .replaceAll("\\.|'s", "").replaceAll("-", " ");
     }
 
 
@@ -241,8 +242,8 @@ public class DocumentHandler {
         }
 
 
-        return String.join(" ", textArray).replaceAll("\\s+", " ")
-                .replaceAll("^\\s+|$\\s+", "");
+        return String.join(" ", textArray).replaceAll("\\s+", " ");
+                //.replaceAll("^\\s+|$\\s+", "");
     }
 
     /**

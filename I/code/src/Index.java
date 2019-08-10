@@ -2,9 +2,7 @@ import indexing.DocumentHandler;
 import indexing.InvIndexGenerator;
 import util.Document;
 import util.DocumentFactory;
-
 import java.util.HashMap;
-
 import java.util.List;
 import java.util.Map;
 
