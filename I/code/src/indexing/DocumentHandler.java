@@ -1,6 +1,4 @@
 package indexing;
-
-
 import util.Document;
 import util.DocumentFactory;
 import util.SkipTags;
