@@ -1,6 +1,4 @@
 package indexing;
-
-
 import util.Document;
 import util.DocumentFactory;
 import util.SkipTags;
@@ -53,7 +51,7 @@ public class DocumentHandler {
      * Quick word processing method
      * @return An arraylist of the produced documents from the infile
      */
-    public List<Document> readFile() {
+    public List<Document> readFile() {   //read file and map doc ID (0,1,2....) to docNo
 
         List<Document> documentList = new Vector<>();
 
