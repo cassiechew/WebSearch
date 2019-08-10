@@ -143,6 +143,7 @@ public class DocumentHandler {
     }
 
 
+
     /**
      * A quick function to tokenize and normalize a block of text
      * @param buffer The block of text to process
@@ -153,8 +154,8 @@ public class DocumentHandler {
                 .toLowerCase().replaceAll("n't", " not")
                 .replaceAll("'re", " are").replaceAll("'m", " am")
                 .replaceAll("'ll", " will").replaceAll("'ve", " have")
-                .replaceAll("'s", "").replaceAll("(?<=\\w{3})\\.(?=\\w{3})", " ")
-                .replaceAll("\\.", "").replaceAll("-", " ");
+                //.replaceAll("'s", "")//.replaceAll("(?<=\\w{3})\\.(?=\\w{3})", " ")
+                .replaceAll("\\.|'s", "").replaceAll("-", " ");
     }
 
 
@@ -243,8 +244,8 @@ public class DocumentHandler {
         }
 
 
-        return String.join(" ", textArray).replaceAll("\\s+", " ")
-                .replaceAll("^\\s+|$\\s+", "");
+        return String.join(" ", textArray).replaceAll("\\s+", " ");
+                //.replaceAll("^\\s+|$\\s+", "");
     }
 
     /**
