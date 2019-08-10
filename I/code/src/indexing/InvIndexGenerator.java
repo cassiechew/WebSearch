@@ -175,8 +175,8 @@ public class InvIndexGenerator {
         long pointer = 0;
 
         try (
-                DataOutputStream dataOutputStream = new DataOutputStream(new FileOutputStream(invlistsFile));//RandomAccessFile invlistRAFile = new RandomAccessFile(invlistsFile, "rw");
-                //FileChannel fileChannel =
+                FileOutputStream fileOutputStream = new FileOutputStream(invlistsFile);//RandomAccessFile invlistRAFile = new RandomAccessFile(invlistsFile, "rw");
+                FileChannel fileChannel = fileOutputStream.getChannel();
         ){
 
             stringBuilder = new StringBuilder();
@@ -184,7 +184,7 @@ public class InvIndexGenerator {
             for (String key: lexiconInvlist.keySet()
                  ) {
                 Map<Integer, Integer> mappingData = lexiconInvlist.get(key);
-                lexiconPairData.put(key, pointer);//fileChannel.position());
+                lexiconPairData.put(key, fileChannel.position());
 
                 prev = 0;
 
@@ -197,14 +197,15 @@ public class InvIndexGenerator {
                             Long.toBinaryString( Integer.toUnsignedLong(mappingData.get(documentID)) | 0x100000000L )
                                     .substring(1));*/
 
-                    byte[] write = ((this.compress) ? compressor.compress( documentID - prev) : ByteBuffer.allocate(4).putInt(documentID).array());
-                    dataOutputStream.write(write);
-                    pointer += (write).length * 8;
+                    byte[] write = ((this.compress) ? compressor.compress( documentID - prev) : ByteBuffer.allocate(4).putInt(documentID-prev).array());
+                    fileChannel.write(ByteBuffer.wrap(write));//dataOutputStream.write(write);
+                    //pointer += (write).length * 8;
 
                     write = ((this.compress) ? compressor.compress( mappingData.get(documentID)) : ByteBuffer.allocate(4).putInt(mappingData.get(documentID)).array());
-                    dataOutputStream.write(write);
+                    //dataOutputStream.write(write);
+                    fileChannel.write(ByteBuffer.wrap(write));
 
-                    pointer += write.length * 8;
+                    //pointer += write.length * 8;
                     prev = documentID;
 
                 }
