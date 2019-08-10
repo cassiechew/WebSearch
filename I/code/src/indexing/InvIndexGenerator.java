@@ -174,8 +174,8 @@ public class InvIndexGenerator {
         int prev;
 
         try (
-                RandomAccessFile invlistRAFile = new RandomAccessFile(invlistsFile, "rw");
-                FileChannel fileChannel = invlistRAFile.getChannel()
+                FileOutputStream fileOutputStream = new FileOutputStream(invlistsFile);//RandomAccessFile invlistRAFile = new RandomAccessFile(invlistsFile, "rw");
+                FileChannel fileChannel = fileOutputStream.getChannel()
         ){
 
             stringBuilder = new StringBuilder();

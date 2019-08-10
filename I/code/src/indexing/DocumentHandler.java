@@ -150,12 +150,16 @@ public class DocumentHandler {
      * @return The processed block of text
      */
     private String processString(String buffer) {
-        return buffer.replaceAll("(?<!\\S)\\p{Punct}+|\\p{Punct}+(?!\\S)", " ")
+        return buffer
                 .toLowerCase().replaceAll("n't", " not")
                 .replaceAll("'re", " are").replaceAll("'m", " am")
                 .replaceAll("'ll", " will").replaceAll("'ve", " have")
-                //.replaceAll("'s", "")//.replaceAll("(?<=\\w{3})\\.(?=\\w{3})", " ")
-                .replaceAll("\\.|'s", "").replaceAll("-", " ");
+                .replaceAll("\\.|'s", "")
+                .replaceAll("\\p{Punct}", " ");
+        //.replaceAll("-|;|/|\\(|=|:", " ");
+
+        //.replaceAll("'s", "")//.replaceAll("(?<=\\w{3})\\.(?=\\w{3})", " ")
+                //                .replaceAll("(?<!\\S)\\p{Punct}+|\\p{Punct}+(?!\\S)", " ")
     }
 
 
