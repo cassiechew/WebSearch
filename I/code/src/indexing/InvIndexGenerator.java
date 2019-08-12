@@ -190,30 +190,19 @@ public class InvIndexGenerator {
 
                 for (Integer documentID : mappingData.keySet()) {
 
-                    /*stringBuilder.append((this.compress) ? compressor.compress( documentID - prev) :
-                            Long.toBinaryString(Integer.toUnsignedLong(documentID) | 0x100000000L ).substring(1));
-                    stringBuilder.append((this.compress) ? compressor.compress(
-                            Integer.toUnsignedLong(mappingData.get(documentID))) :
-                            Long.toBinaryString( Integer.toUnsignedLong(mappingData.get(documentID)) | 0x100000000L )
-                                    .substring(1));*/
 
-                    byte[] write = ((this.compress) ? compressor.compress( documentID - prev) : ByteBuffer.allocate(4).putInt(documentID-prev).array());
-                    fileChannel.write(ByteBuffer.wrap(write));//dataOutputStream.write(write);
-                    //pointer += (write).length * 8;
 
-                    write = ((this.compress) ? compressor.compress( mappingData.get(documentID)) : ByteBuffer.allocate(4).putInt(mappingData.get(documentID)).array());
-                    //dataOutputStream.write(write);
+                    byte[] write = ((this.compress) ? compressor.compress( documentID - prev) :
+                            ByteBuffer.allocate(4).putInt(documentID-prev).array());
                     fileChannel.write(ByteBuffer.wrap(write));
 
-                    //pointer += write.length * 8;
+                    write = ((this.compress) ? compressor.compress( mappingData.get(documentID)) :
+                            ByteBuffer.allocate(4).putInt(mappingData.get(documentID)).array());
+                    fileChannel.write(ByteBuffer.wrap(write));
+
                     prev = documentID;
 
                 }
-
-                //byteBuffer = ByteBuffer.wrap(stringBuilder.toString().getBytes(StandardCharsets.UTF_8));
-                //fileChannel.write(byteBuffer);
-                //stringBuilder.setLength(0);
-
             }
         } catch (IOException e) {
             e.printStackTrace();
