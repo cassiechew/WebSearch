@@ -68,13 +68,13 @@ public class InvIndexGenerator {
      * Creates the full inverted list data
      * @param documentList The list of documents to process
      */
-    public void createList (List<Document> documentList) {
+    public void createList (List<Document> documentList, boolean verbose) {
 
         for (Document d : documentList
              ) {
 
-            mapLexiconData(d.getDocumentID(), d.getHeadline().split(" "));
-            mapLexiconData(d.getDocumentID(), d.getTextData().split(" "));
+            mapLexiconData(d.getDocumentID(), d.getHeadline().split(" "), verbose);
+            mapLexiconData(d.getDocumentID(), d.getTextData().split(" "), verbose);
 
         }
 
@@ -89,12 +89,13 @@ public class InvIndexGenerator {
      * @param documentID The ID of the current document being processed
      * @param textData The text data to process from the current document
      */
-    private void mapLexiconData (int documentID, String[] textData) {
+    private void mapLexiconData (int documentID, String[] textData, boolean verbose) {
 
         for (String s : textData) {
             if (!lexiconInvlist.containsKey(s)) {
                 SortedMap<Integer, Integer> newSet = new TreeMap<>();
                 newSet.put(documentID, 1);
+                if (verbose) System.out.println(s);
                 lexiconInvlist.put(s, newSet);
             }
             else {

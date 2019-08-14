@@ -61,7 +61,7 @@ public class Compressed_Index {
         invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME, true, "varbyte");
 
         System.out.println("Indexing data...");
-        invIndexGenerator.createList(parsedData);
+        invIndexGenerator.createList(parsedData, verbose);
         System.out.println("Indexing complete!");
 
         System.out.println("Writing indexed data to file...");
