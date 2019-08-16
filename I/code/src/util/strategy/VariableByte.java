@@ -63,11 +63,11 @@ public class VariableByte implements Strategy {
         numBytes = numBytes > 0 ? numBytes : 1;
         byte[] output = new byte[numBytes];
         // for each byte of output ...
-        for(int i = 0; i < numBytes; i++) {
+        for(int i = numBytes-1; i >= 0; i--) {
             // ... take the least significant 7 bits of input and set the MSB to 1 ...
             output[i] = (byte) ((input & 0b1111111) | 0b10000000);
             // ... shift the input right by 7 places, discarding the 7 bits we just used
-            input >>= 7;
+            input >>= VARBYTELENGTH;
         }
         // finally reset the MSB on the last byte
         output[0] &= 0b01111111;
