@@ -64,7 +64,7 @@ public class search {
 
         for (int j = 3; j < args.length; j++) {
         //looking for query term inside map
-        LexMapping lexMapping = map.get(args[3]); //stores Lexmapping type variable called lexMapping
+        LexMapping lexMapping = map.get(args[j]); //stores Lexmapping type variable called lexMapping
         int[] output1 = new int[2 * lexMapping.getNoDocuments()];
 
             try (
@@ -86,7 +86,7 @@ public class search {
                 e.printStackTrace();
             }
 
-                System.out.println(args[3]);
+                System.out.println(args[j]);
                 System.out.println(lexMapping.getNoDocuments());
             for (int i = 0; i < output1.length; i++){
                 if (i % 2 == 0){
