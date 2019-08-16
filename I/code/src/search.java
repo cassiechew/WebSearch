@@ -7,8 +7,7 @@ import java.nio.ByteBuffer;
 public class search {
 
 
-
-    public static void main (String[] args) {
+    public static void main(String[] args) {
 
         if (args.length < 4) {
             System.out.println("invalid arguments");
@@ -58,54 +57,54 @@ public class search {
             System.out.println("File I/O error!");
         }
 
-        //looking for query term inside map
-        LexMapping lexMapping = map.get(args[3]); //stores Lexmapping type variable called lexMapping
+
 
         File file2 = new File(args[1]); //open inverted list file
 
-        try {
-            RandomAccessFile randomAccessFile = new RandomAccessFile(file2, "r");
-            randomAccessFile.seek(lexMapping.getOffset());  //getting byteoffset from map
-            int [] output1 = new int [ 2*lexMapping.getNoDocuments()];
-            for (int i = 0; i < 2*lexMapping.getNoDocuments(); i++ ){  //no. of itrations for int
-                //get docID and frequency
-                byte [] docIDFrequency = new byte [4];
-               //reading bytes and stored in byte []
-                randomAccessFile.read(docIDFrequency);
-                //convert byte array to bytebuffer
-                ByteBuffer wrapped = ByteBuffer.wrap(docIDFrequency);
-                int output = wrapped.getInt();
-                output1[i] = i;
+        for (int j = 3; j < args.length; j++) {
+        //looking for query term inside map
+        LexMapping lexMapping = map.get(args[3]); //stores Lexmapping type variable called lexMapping
+        int[] output1 = new int[2 * lexMapping.getNoDocuments()];
+
+            try (
+                    RandomAccessFile randomAccessFile = new RandomAccessFile(file2, "r")
+            ) {
+                randomAccessFile.seek(lexMapping.getOffset());  //getting byteoffset from map
+                for (int i = 0; i < 2 * lexMapping.getNoDocuments(); i++) { //no. of itrations for int
+                    //get docID and frequency
+                    byte[] docIDFrequency = new byte[4];
+                    //reading bytes and stored in byte []
+                    randomAccessFile.read(docIDFrequency);
+                    //convert byte array to bytebuffer
+                    ByteBuffer wrapped = ByteBuffer.wrap(docIDFrequency);
+                    int output = wrapped.getInt();
+                    output1[i] = i;
+                }
+            } catch(IOException e)
+            {
+                e.printStackTrace();
             }
-                System.out.println(args[3]);
-                System.out.println(lexMapping.getNoDocuments());
-            for (int i = 0; i < output1.length; i++){
-                if (i % 2 == 0){
+
+            System.out.println(args[j]);
+            System.out.println(lexMapping.getNoDocuments());
+            for (int i = 0; i < output1.length; i++) {
+                if (i % 2 == 0) {
                     String rawDocName = map1.get(output1);
                     System.out.print(rawDocName + " ");
-                }
-                else {
+                } else {
                     System.out.print(output1[i]);
                 }
 
             }
 
-
-
-
-
-
-
-
         }
 
-        catch (IOException e){
-            e.printStackTrace();
-        }
+    }
 
 
 
-    }}
+
+    }
 
 
 
