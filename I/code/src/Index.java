@@ -39,7 +39,6 @@ public class Index {
 
         opsHandler(args);
 
-
         final long start = (timed) ? System.currentTimeMillis() : 0;
 
         System.out.println("\033[H\033[2J");
@@ -62,19 +61,23 @@ public class Index {
         invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME, compress, compressionStrategy);
 
         System.out.println("Indexing data...");
-        invIndexGenerator.createList(parsedData);
+        invIndexGenerator.createList(parsedData, verbose);
         System.out.println("Indexing complete!");
 
         System.out.println("Writing indexed data to file...");
         invIndexGenerator.writeOutfileData();
         System.out.println("Writing complete!");
 
+
+        /*
         if (verbose) {
             for (Document d : parsedData
                  ) {
                 d.printDoc();
             }
         }
+
+         */
 
         if (timed) {
             final long end = System.currentTimeMillis();

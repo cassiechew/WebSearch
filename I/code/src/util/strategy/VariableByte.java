@@ -22,6 +22,7 @@ public class VariableByte implements Strategy {
      * @param input The number to compress
      * @return A string representation of the compressed binary data
      */
+    @Deprecated
     public String _compress(long input) {
         int convertedInt = (int) input;
         int numBytes = ((INTEGERBYTELENGTH - Integer.numberOfLeadingZeros(convertedInt))
@@ -50,10 +51,15 @@ public class VariableByte implements Strategy {
     }
 
 
+    /**
+     * Variable byte compression algorithm implementation
+     * @param input The number to compress
+     * @return A string representation of the compressed binary data
+     */
     public byte[] compress(int input) {
         // first find out how many bytes we need to represent the integer
-        int numBytes = ((32 - Integer.numberOfLeadingZeros(input)) + 6) / 7;
-        // if the integer is 0, we still need 1 byte
+        int numBytes = ((INTEGERBYTELENGTH - Integer.numberOfLeadingZeros(input))
+                + (VARBYTELENGTH - 1)) / VARBYTELENGTH;        // if the integer is 0, we still need 1 byte
         numBytes = numBytes > 0 ? numBytes : 1;
         byte[] output = new byte[numBytes];
         // for each byte of output ...
