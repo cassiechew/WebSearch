@@ -20,7 +20,7 @@ public class Index {
 
     private final static int FAILURE = 1;
 
-    private static List<Document> parsedData;
+    private static List<Document> parsedData    = null;
 
     private static String currentFile           = null;
     private static String stopfile              = null;
@@ -43,6 +43,7 @@ public class Index {
 
         System.out.println("\033[H\033[2J");
         System.out.println("Initializing factories and files...");
+
         documentHandler.setDocumentFactory(documentFactory);
         documentHandler.setCurrentFile(currentFile);
 
@@ -51,40 +52,33 @@ public class Index {
         }
 
         System.out.println("Parsing document data...");
+
         parsedData = documentHandler.readFile();
 
         System.out.println("Writing mapping data...");
-        documentHandler.writeOutFile(MAPFILENAME);
-        System.out.println("Parsing complete!");
 
+        documentHandler.writeOutFile(MAPFILENAME);
+
+        System.out.println("Parsing complete!");
         System.out.println("Initializing index generator...");
+
         invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME, compress, compressionStrategy);
 
         System.out.println("Indexing data...");
+
         invIndexGenerator.createList(parsedData, verbose);
+
         System.out.println("Indexing complete!");
-
         System.out.println("Writing indexed data to file...");
+
         invIndexGenerator.writeOutfileData();
+
         System.out.println("Writing complete!");
-
-
-        /*
-        if (verbose) {
-            for (Document d : parsedData
-                 ) {
-                d.printDoc();
-            }
-        }
-
-         */
 
         if (timed) {
             final long end = System.currentTimeMillis();
             System.out.println("Total execution time: " + (end - start));
         }
-
-
 
         System.out.println("Inverted index completed!");
 
@@ -140,30 +134,22 @@ public class Index {
             if (args[i].equals("-c") | args[i].equals("--compress")) {
                 compress = true;
                 opsArray[i] = true;
-                if (args.length <= i+1) {
-                    exit(args[i]);
-                }
-                else if (args[i+1].startsWith("-")) {
-                    exit(args[i]);
-                }
-                compressionStrategy = args[i+1];
-                opsArray[i+1] = true;
+                extOpsChecker(args, i);
 
+                compressionStrategy = args[i+1];
+
+                opsArray[i+1] = true;
                 opsCount = opsCount + 2;
                 continue;
             }
             if (args[i].equals("-s") | args[i].equals("--stoplist")) {
                 hasStoplist = true;
                 opsArray[i] = true;
-                if (args.length <= i+1) {
-                    exit(args[i]);
-                }
-                else if (args[i+1].startsWith("-")) {
-                    exit(args[i]);
-                }
-                stopfile = args[i+1];
-                opsArray[i+1] = true;
+                extOpsChecker(args, i);
 
+                stopfile = args[i+1];
+
+                opsArray[i+1] = true;
                 opsCount = opsCount + 2;
                 continue;
             }
@@ -181,6 +167,15 @@ public class Index {
         }
         if (opsCount != opsArray.length) {
             System.exit(FAILURE);
+        }
+    }
+
+    private static void extOpsChecker(String[] args, int i) {
+        if (args.length <= i+1) {
+            exit(args[i]);
+        }
+        else if (args[i+1].startsWith("-")) {
+            exit(args[i]);
         }
     }
 

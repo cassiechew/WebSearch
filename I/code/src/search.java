@@ -15,6 +15,7 @@ public class search {
         }
 
 
+
         HashMap<String, LexMapping> map = new HashMap<>();
         try {
             File file = new File(args[0]);
@@ -60,18 +61,21 @@ public class search {
 
 
 
+
         File file2 = new File(args[1]); //open inverted list file
 
         for (int j = 3; j < args.length; j++) {
+
         //looking for query term inside map
-        LexMapping lexMapping = map.get(args[3]); //stores Lexmapping type variable called lexMapping
-        int[] output1 = new int[2 * lexMapping.getNoDocuments()];
+            LexMapping lexMapping = map.get(args[j]); //stores Lexmapping type variable called lexMapping
+            int[] output1 = new int[2 * lexMapping.getNoDocuments()];
 
             try (
                     RandomAccessFile randomAccessFile = new RandomAccessFile(file2, "r")
             ) {
                 randomAccessFile.seek(lexMapping.getOffset());  //getting byteoffset from map
                 for (int i = 0; i < 2 * lexMapping.getNoDocuments(); i++) { //no. of itrations for int
+
                     //get docID and frequency
                     byte[] docIDFrequency = new byte[4];
                     //reading bytes and stored in byte []
@@ -86,7 +90,7 @@ public class search {
                 e.printStackTrace();
             }
 
-                System.out.println(args[3]);
+                System.out.println(args[j]);
                 System.out.println(lexMapping.getNoDocuments());
             for (int i = 0; i < output1.length; i++){
                 if (i % 2 == 0){
@@ -107,6 +111,7 @@ public class search {
 
 
     }
+
 
 
 
