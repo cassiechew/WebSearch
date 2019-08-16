@@ -15,6 +15,7 @@ public class search {
             System.exit(1);
         }
 
+
         HashMap<String, LexMapping> map = new HashMap<>();
         try {
             File file = new File(args[0]);
@@ -81,11 +82,11 @@ public class search {
                 System.out.println(lexMapping.getNoDocuments());
             for (int i = 0; i < output1.length; i++){
                 if (i % 2 == 0){
-                    String rawDocName = map1.get(output1);
+                    String rawDocName = map1.get(output1[i]);
                     System.out.print(rawDocName + " ");
                 }
                 else {
-                    System.out.print(output1[i]);
+                    System.out.println(output1[i]);
                 }
 
             }
