@@ -67,8 +67,13 @@ public class search {
         for (int j = 3; j < args.length; j++) {
 
         //looking for query term inside map
+<<<<<<< HEAD
             LexMapping lexMapping = map.get(args[j]); //stores Lexmapping type variable called lexMapping
             int[] output1 = new int[2 * lexMapping.getNoDocuments()];
+=======
+        LexMapping lexMapping = map.get(args[j]); //stores Lexmapping type variable called lexMapping
+        int[] output1 = new int[2 * lexMapping.getNoDocuments()];
+>>>>>>> master
 
             try (
                     RandomAccessFile randomAccessFile = new RandomAccessFile(file2, "r")
