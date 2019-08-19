@@ -1,10 +1,10 @@
 import util.LexMapping;
-import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.nio.ByteBuffer;
 
-public class search {
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+
+public class compressed_search {
 
 
     public static void main(String[] args) {

@@ -169,18 +169,15 @@ public class InvIndexGenerator {
     private Map<String, Long> writeInvertedListData () {
 
         Map<String, Long> lexiconPairData = new HashMap<>();
-        StringBuilder stringBuilder;
-        ByteBuffer byteBuffer;
 
         int prev;
-        long pointer = 0;
+
 
         try (
                 FileOutputStream fileOutputStream = new FileOutputStream(invlistsFile);//RandomAccessFile invlistRAFile = new RandomAccessFile(invlistsFile, "rw");
                 FileChannel fileChannel = fileOutputStream.getChannel();
         ){
 
-            stringBuilder = new StringBuilder();
 
             for (String key: lexiconInvlist.keySet()
                  ) {

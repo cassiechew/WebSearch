@@ -19,5 +19,4 @@ Strategies:");
   varbyte         ->     Variable Byte Compression
 
 
-This program includes an option for compression. However, the Compressed_Index version has the
-variable byte compression by default.
+This program includes an option for compression.

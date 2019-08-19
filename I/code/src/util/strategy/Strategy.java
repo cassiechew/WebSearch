@@ -25,5 +25,5 @@ public interface Strategy {
      * @param input The string to decompress
      * @return The number gained from the decompression
      */
-    Map<String, Map<Integer, Integer>> decompress(String input, List<LexMapping> word);
+    int decompress(byte[] input);
 }
