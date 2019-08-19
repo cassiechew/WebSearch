@@ -8,8 +8,6 @@ import java.util.Map;
 
 public class Index {
 
-    private static final String LEXICONFILENAME = "lexicon";
-    private static final String INVLISTFILENAME = "invlist";
     private static final String MAPFILENAME     = "map";
 
 
@@ -38,10 +36,10 @@ public class Index {
         compress = false;
 
         opsHandler(args);
+        if (!compress) compressionStrategy = "none";
 
         final long start = (timed) ? System.currentTimeMillis() : 0;
 
-        System.out.println("\033[H\033[2J");
         System.out.println("Initializing factories and files...");
 
         documentHandler.setDocumentFactory(documentFactory);
@@ -62,7 +60,7 @@ public class Index {
         System.out.println("Parsing complete!");
         System.out.println("Initializing index generator...");
 
-        invIndexGenerator = new InvIndexGenerator(LEXICONFILENAME, INVLISTFILENAME, compress, compressionStrategy);
+        invIndexGenerator = new InvIndexGenerator(compressionStrategy);
 
         System.out.println("Indexing data...");
 

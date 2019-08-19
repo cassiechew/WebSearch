@@ -23,6 +23,14 @@ public class InvIndexGenerator {
     /** Contains the inverted list information, consisting only of numerical data */
     private File invlistsFile;
 
+    private final String INVLISTFILENAME = "invlist";
+    private final String INVLISTFILENAMEVB = "invlistvb";
+
+    private final String LEXICONFILENAME = "lexicon";
+    private final String LEXICONFILENAMEVB = "lexiconvb";
+
+
+
     /** The compressor that will be used to handle all compression/decompression of data */
     private Compressor compressor;
 
@@ -30,21 +38,37 @@ public class InvIndexGenerator {
     private boolean compress;
 
     /** The internal representation of the lexicon-inverted list */
-    private Map<String, Map<Integer, Integer>> lexiconInvlist;
+    private Map<String, SortedMap<Integer, Integer>> lexiconInvlist;
 
 
-    public InvIndexGenerator (String lexiconFilename, String invlistFilename, boolean compress,
-                              String compressionStrategy) {
+    public InvIndexGenerator (String compressionStrategy) {
 
-        lexiconFile = new File(lexiconFilename);
-        invlistsFile = new File(invlistFilename);
+        initFiles(compressionStrategy);
 
         this.lexiconInvlist = new HashMap<>();
 
-        this.compress = compress;
-
-        compressor = (compress) ? new Compressor(compressionStrategy) : null;
+        compressor = new Compressor(compressionStrategy);
         clearFiles();
+    }
+
+
+    private void initFiles (String compressionStrategy) {
+
+        switch(compressionStrategy) {
+            case "none":
+                invlistsFile = new File(this.INVLISTFILENAME);
+                lexiconFile = new File(this.LEXICONFILENAME);
+                break;
+            case "varbyte":
+                invlistsFile = new File(this.INVLISTFILENAMEVB);
+                lexiconFile = new File(this.LEXICONFILENAMEVB);
+                break;
+            default:
+                System.out.println("System Failure");
+                System.exit(1);
+        }
+
+
     }
 
 
@@ -92,10 +116,11 @@ public class InvIndexGenerator {
     private void mapLexiconData (int documentID, String[] textData, boolean verbose) {
 
         for (String s : textData) {
+            if (verbose) System.out.println(s);
+
             if (!lexiconInvlist.containsKey(s)) {
                 SortedMap<Integer, Integer> newSet = new TreeMap<>();
                 newSet.put(documentID, 1);
-                if (verbose) System.out.println(s);
                 lexiconInvlist.put(s, newSet);
             }
             else {
@@ -181,21 +206,18 @@ public class InvIndexGenerator {
 
             for (String key: lexiconInvlist.keySet()
                  ) {
-                Map<Integer, Integer> mappingData = lexiconInvlist.get(key);
+                SortedMap<Integer, Integer> mappingData = lexiconInvlist.get(key);
                 lexiconPairData.put(key, fileChannel.position());
 
                 prev = 0;
-
                 for (Integer documentID : mappingData.keySet()) {
 
 
 
-                    byte[] write = ((this.compress) ? compressor.compress( documentID - prev) :
-                            ByteBuffer.allocate(4).putInt(documentID-prev).array());
+                    byte[] write = compressor.compress( documentID - prev);
                     fileChannel.write(ByteBuffer.wrap(write));
 
-                    write = ((this.compress) ? compressor.compress( mappingData.get(documentID)) :
-                            ByteBuffer.allocate(4).putInt(mappingData.get(documentID)).array());
+                    write = compressor.compress( mappingData.get(documentID));
                     fileChannel.write(ByteBuffer.wrap(write));
 
                     prev = documentID;

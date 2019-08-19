@@ -3,8 +3,12 @@ package util.strategy;
 
 import util.LexMapping;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +16,7 @@ import java.util.Map;
 /**
  * Variable byte compression/decompression strategy for use
  */
-public class VariableByte implements Strategy {
+public class VariableByte extends AStrategy implements Strategy {
 
     private static final int INTEGERBYTELENGTH  = 32;
     private static final int VARBYTELENGTH      = 7;
@@ -64,7 +68,7 @@ public class VariableByte implements Strategy {
         numBytes = numBytes > 0 ? numBytes : 1;
         byte[] output = new byte[numBytes];
         // for each byte of output ...
-        for(int i = 0; i < numBytes; i++) {
+        for(int i = numBytes - 1; i >= 0; i--) {
             // ... take the least significant 7 bits of input and set the MSB to 1 ...
             output[i] = (byte) ((input & 0b1111111) | 0b10000000);
             // ... shift the input right by 7 places, discarding the 7 bits we just used
@@ -72,31 +76,67 @@ public class VariableByte implements Strategy {
         }
         // finally reset the MSB on the last byte
         output[numBytes-1] &= 0b01111111;
+
+
         return output;
     }
 
     /**
      * Variable byte decompression
-     * @param input The invlist string to decompress
-     * @return The integer
      */
-    public int decompress(byte[] input) {
-        return ByteBuffer.wrap(input).getInt();
-    }
+    public void decompress(String invindexFileName, Map<String, LexMapping> lexicon, Map<Integer, String> mappingData, String[] queries) {
+
+        File invListFile = new File(invindexFileName);
 
 
-    /**
-     * Decompressing algorithm for a single digit
-     * @param input The binary string representation of the compressed data
-     * @return The decompressed integer
-     */
-    private int singleDecompress (String input) {
-        int lengthOfString = input.length();
-        StringBuilder sb = new StringBuilder();
+        try (
+                RandomAccessFile invIndexRAF = new RandomAccessFile(invListFile, "r")
+                ) {
 
-        for (int i = 0; i < (lengthOfString/VARBYTELENGTHFULL); i++) {
-            sb.append(String.valueOf(input.toCharArray(), i * VARBYTELENGTHFULL, VARBYTELENGTHFULL));
+            for (String query : queries) {
+
+                LexMapping lexMapping = lexicon.get(query);
+                int noIntsToRead = 2 * lexMapping.getNoDocuments();
+                int[] intStore = new int[noIntsToRead];
+
+                byte[] tempByteStore;
+                short counter = 3;
+
+                invIndexRAF.seek(lexMapping.getOffset());
+
+                for (int i = 0; i < noIntsToRead; i++) {
+                    boolean lastByteFound = false;
+                    tempByteStore = new byte[4];
+
+                    do {
+
+                        byte[] singleByte = new byte[1];
+                        invIndexRAF.read(singleByte);
+                        if(checkByte(singleByte)) {
+                            lastByteFound = true;
+                            tempByteStore[counter] = (byte) (singleByte[0] & 0b1111111);
+                            intStore[i] = ByteBuffer.wrap(tempByteStore).getInt();
+                            counter = 3;
+                        }
+                        else {
+                            tempByteStore[counter] = (byte) (singleByte[0] & 0b1111111);
+                            counter--;
+                        }
+
+                    } while (!lastByteFound);
+
+                }
+                outputData(query, lexMapping, mappingData, intStore);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return Integer.parseInt(sb.toString(),2);
     }
+
+    private boolean checkByte (byte[] input) {
+        return ((input[input.length-1] >> VARBYTELENGTH) & 1) == 0;
+    }
+
+
 }

@@ -15,8 +15,9 @@ Options:
   -c, --compress         Use variable byte compression
   -h, --help             Prints this help message and exits
 
-Strategies:");
+Strategies:
+  none [default]  ->     No compression
   varbyte         ->     Variable Byte Compression
 
-
-This program includes an option for compression.
+Upon compression, the lexicon and inverted list file will be generated with a suffix
+to denote the compression type. This

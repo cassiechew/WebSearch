@@ -1,6 +1,7 @@
 package util;
 
 
+import util.strategy.Standard;
 import util.strategy.Strategy;
 import util.strategy.VariableByte;
 
@@ -20,6 +21,9 @@ public class Compressor {
     public Compressor (String strategy) {
 
         switch (strategy) {
+            case "none":
+                this.strategy = new Standard();
+                break;
             case "varbyte":
                 this.strategy = new VariableByte();
                 break;
@@ -42,10 +46,8 @@ public class Compressor {
 
     /**
      * Calls the decompress method in the strategy
-     * @param input The binary string to decompress
-     * @return The mapped data gained from the decompression
      */
-    public Map<String, Map<Integer, Integer>> decompress (String input, List<LexMapping> lexiconData) {
-        return strategy.decompress(input, lexiconData);
+    public void decompress (String invindexFileName, Map<String, LexMapping> lexicon, Map<Integer, String> mappingData, String[] queries) {
+        strategy.decompress(invindexFileName, lexicon, mappingData, queries);
     }
 }

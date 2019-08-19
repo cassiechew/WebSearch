@@ -16,7 +16,9 @@ CLASSES = \
 		util/SkipTags.java \
 		util/SwitchTags.java \
 		util/strategy/Strategy.java \
-		util/strategy/VariableByte.java
+		util/strategy/VariableByte.java \
+		util/strategy/Standard.java \
+		util/strategy/AStrategy.java
 
 default: classes
 

@@ -22,8 +22,6 @@ public interface Strategy {
 
     /**
      * The compression method used by the implementing strategy to be called from the compressor context
-     * @param input The string to decompress
-     * @return The number gained from the decompression
      */
-    int decompress(byte[] input);
+     void decompress(String invindexFileName, Map<String, LexMapping> lexicon, Map<Integer, String> mappingData, String[] queries);
 }

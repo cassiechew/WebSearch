@@ -1,11 +1,17 @@
+import util.Compressor;
 import util.LexMapping;
 import java.io.*;
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.nio.ByteBuffer;
 
-public class search {
+public class Search {
 
+
+    private static String compressionStrategy = "none";
+    private static Compressor compressor;
 
     public static void main(String[] args) {
 
@@ -14,6 +20,8 @@ public class search {
             System.exit(1);
         }
 
+        setCompressionStrategy(args[1]);
+        init();
 
 
         HashMap<String, LexMapping> map = new HashMap<>();
@@ -60,52 +68,26 @@ public class search {
         }
 
 
-
-
-        File file2 = new File(args[1]); //open inverted list file
-
-        for (int j = 3; j < args.length; j++) {
-
-        //looking for query term inside map
-            LexMapping lexMapping = map.get(args[j]); //stores Lexmapping type variable called lexMapping
-            int[] output1 = new int[2 * lexMapping.getNoDocuments()];
-
-
-            try (
-                    RandomAccessFile randomAccessFile = new RandomAccessFile(file2, "r")
-            ) {
-                randomAccessFile.seek(lexMapping.getOffset());  //getting byteoffset from map
-                for (int i = 0; i < 2 * lexMapping.getNoDocuments(); i++) { //no. of itrations for int
-
-                    //get docID and frequency
-                    byte[] docIDFrequency = new byte[4];
-                    //reading bytes and stored in byte []
-                    randomAccessFile.read(docIDFrequency);
-                    //convert byte array to bytebuffer
-                    ByteBuffer wrapped = ByteBuffer.wrap(docIDFrequency);
-                    int output = wrapped.getInt();
-                    output1[i] = i;
-                }
-            } catch(IOException e)
-            {
-                e.printStackTrace();
-            }
-
-                System.out.println(args[j]);
-                System.out.println(lexMapping.getNoDocuments());
-            for (int i = 0; i < output1.length; i++){
-                if (i % 2 == 0){
-                    String rawDocName = map1.get(output1[i]);
-                    System.out.print(rawDocName + " ");
-                }
-                else {
-                    System.out.println(output1[i]);
-                }
-            }
-        }
+        compressor.decompress(args[1], map, map1, Arrays.copyOfRange(args, 3, args.length));
+        
     }
 
+    private static void setCompressionStrategy (String invlistFileName) {
 
+        switch (invlistFileName) {
+            case "invlist":
+                compressionStrategy = "none";
+                break;
+            case "invlistvb":
+                compressionStrategy = "varbyte";
+                break;
+        }
+
+    }
+
+    private static void init() {
+        compressor = new Compressor(compressionStrategy);
+    }
 
 }
 
