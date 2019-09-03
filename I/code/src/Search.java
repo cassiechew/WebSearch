@@ -1,17 +1,19 @@
-import util.Compressor;
-import util.LexMapping;
-import java.io.*;
-import java.lang.reflect.Array;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.nio.ByteBuffer;
+import quering.QueryDocumentHandler;
 
+import util.Compressor;
+
+import java.util.Arrays;
+
+
+/**
+ * A module to search through the inverted list for documents that contain query words
+ */
 public class Search {
 
 
     private static String compressionStrategy = "none";
     private static Compressor compressor;
+    private static QueryDocumentHandler queryDocumentHandler;
 
     public static void main(String[] args) {
 
@@ -20,58 +22,20 @@ public class Search {
             System.exit(1);
         }
 
-        setCompressionStrategy(args[1]);
-        init();
+        init(args[1]);
 
+        queryDocumentHandler.generateIndexDataFromFiles(args[0], QueryDocumentHandler.fileType.LEXICON);
+        queryDocumentHandler.generateIndexDataFromFiles(args[2], QueryDocumentHandler.fileType.MAP);
 
-        HashMap<String, LexMapping> map = new HashMap<>();
-        try {
-            File file = new File(args[0]);
-            BufferedReader lexicon = new BufferedReader(new FileReader(new File(args[0])));
+        compressor.decompress(args[1], queryDocumentHandler.getLexicon(), queryDocumentHandler.getMapping(), Arrays.copyOfRange(args, 3, args.length));
 
-            int line = 0;
-            String buffer;
-            //put lexicon into memory
-
-            while ((buffer = lexicon.readLine()) != null) {
-                String[] lex = buffer.split(" ");
-                //convert 2nd/3rd to Int and Int
-                int lex1 = Integer.parseInt(lex[1]);
-                int lex2 = Integer.parseInt(lex[2]);
-                map.put(lex[0], new LexMapping(lex1, lex2));
-            }
-
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        HashMap<Integer, String> map1 = new HashMap<>();
-        try {
-            File file1 = new File(args[2]);
-            BufferedReader latimes100 = new BufferedReader(new FileReader(new File(args[2])));
-
-            int line1 = 0;
-            String buffer1;
-            //put mapping table into memory, map DOCID to raw DOCID
-
-            while ((buffer1 = latimes100.readLine()) != null) {
-                String[] mappingtable = buffer1.split(" ");
-                //convert 1st to Int
-                int mappingtable1 = Integer.parseInt((mappingtable[0]));
-                map1.put(mappingtable1, mappingtable[1]);
-            }
-
-
-        } catch (IOException e) {
-            System.out.println("File I/O error!");
-        }
-
-
-        compressor.decompress(args[1], map, map1, Arrays.copyOfRange(args, 3, args.length));
-        
     }
 
+
+    /**
+     * Sets the compression strategy to unpack based on filename
+     * @param invlistFileName The name of the inverted list binary data file
+     */
     private static void setCompressionStrategy (String invlistFileName) {
 
         switch (invlistFileName) {
@@ -85,8 +49,15 @@ public class Search {
 
     }
 
-    private static void init() {
+    /**
+     * Initializes the search module
+     * @param invlistFileName The name of the inverted list binary data file
+     */
+    private static void init(String invlistFileName) {
+
+        setCompressionStrategy(invlistFileName);
         compressor = new Compressor(compressionStrategy);
+        queryDocumentHandler = new QueryDocumentHandler();
     }
 
 }

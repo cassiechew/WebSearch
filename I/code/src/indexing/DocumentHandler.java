@@ -181,11 +181,8 @@ public class DocumentHandler {
             System.out.println("This stoplist file does not exist!");
             System.exit(1);
         }
-
-
         this.hasStopFile = true;
         this.stoplistHashtable = new HashMap<>();
-
         try (
                 FileReader fileReader = new FileReader(stoplistFile);
                 BufferedReader bufferedReader = new BufferedReader(fileReader)
