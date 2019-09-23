@@ -17,4 +17,9 @@ public class BM25 {
     }
 
 
+    public static void calculateAllDocumentWeights () {
+
+    }
+
+
 }
