@@ -5,6 +5,7 @@ import util.strategy.Standard;
 import util.strategy.Strategy;
 import util.strategy.VariableByte;
 
+import java.util.List;
 import java.util.Map;
 
 
@@ -48,9 +49,9 @@ public class Compressor {
      * @param invindexFileName The name of the inverted list file
      * @param lexicon The lexicon hashmap containing the documents, and offset numbers
      * @param mappingData The mapping data that pairs document IDs to raw document IDs in the collection
-     * @param query The query terms to search.
+     * @param queries The query terms to search.
      */
-    public void decompress (String invindexFileName, Map<String, LexMapping> lexicon, Map<Integer, MapMapping> mappingData, String query) {
-        strategy.decompress(invindexFileName, lexicon, mappingData, query);
+    public void decompress (String invindexFileName, Map<String, LexMapping> lexicon, Map<Integer, String> mappingData, String[] queries) {
+        strategy.decompress(invindexFileName, lexicon, mappingData, queries);
     }
 }

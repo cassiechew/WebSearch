@@ -28,7 +28,8 @@ public class QueryDocumentHandler {
     /** An enum of file types that this class will have to deal with */
     public enum fileType {
         LEXICON,
-        MAP;
+        MAP,
+        INVLIST;
     }
 
     public HashMap<String, LexMapping> getLexicon() {
@@ -47,7 +48,7 @@ public class QueryDocumentHandler {
      */
     public void generateIndexDataFromFiles (String fileToRead, fileType fileType, Vector<String> queryTerms) {
 
-
+        boolean iLfirstLine = false;
 
         try (
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(fileToRead));
@@ -64,7 +65,7 @@ public class QueryDocumentHandler {
 
                         break;
                     case MAP:
-                        MapMapping mapMapping = new MapMapping(splitStringData[1]);
+                        MapMapping mapMapping = new MapMapping(splitStringData[1], 0);
                         mapping.put(Integer.parseInt((splitStringData[0])), mapMapping);
 
                         break;
