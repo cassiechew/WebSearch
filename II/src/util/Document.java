@@ -14,13 +14,16 @@ public class Document {
     private String headline;
     private String textData;
 
+    private int documentLength;
 
-    public Document (String documentNo, int documentID, String headline, String textData, DocumentFactory documentFactory) {
+
+    public Document (String documentNo, int documentID, String headline, String textData, int documentWeight, DocumentFactory documentFactory) {
         super();
         this.documentNo = documentNo;
         this.documentID = documentID;
         this.headline = headline;
         this.textData = textData;
+        this.documentLength = documentWeight;
         documentFactory.registerDocument(documentID, this);
     }
 
@@ -41,6 +44,7 @@ public class Document {
         return textData;
     }
 
+    public int getDocumentLength() { return documentLength; }
 
     /**
      * Prints the document

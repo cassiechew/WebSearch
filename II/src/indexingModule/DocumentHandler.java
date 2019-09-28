@@ -94,7 +94,7 @@ public class DocumentHandler {
                 if (buffer.equals(SwitchTags.HEADLINE.getText()) || buffer.equals(SwitchTags.CLOSEHEAD.getText())) {
                     readHeader = !readHeader;
                 }
-                else if ( buffer.equals(SwitchTags.TEXT.getText()) || buffer.equals(SwitchTags.CLOSETEXT.getText())) {
+                else if (buffer.equals(SwitchTags.TEXT.getText()) || buffer.equals(SwitchTags.CLOSETEXT.getText())) {
                     readText = !readText;
                 }
                 else if (buffer.contains(SwitchTags.DOCNO.getText()) || buffer.contains(SwitchTags.CLOSEDOCNO.getText())) {
@@ -139,6 +139,9 @@ public class DocumentHandler {
         return documentList;
 
     }
+
+
+
 
 
 
@@ -259,7 +262,7 @@ public class DocumentHandler {
     private Document generateDocument (String documentNo, String heading, String textData) {
 
         int id = currentDocumentCount;
-        Document document = new Document(documentNo, id, heading, textData, new DocumentFactory(null));
+        Document document = new Document(documentNo, id, heading, textData, 0,new DocumentFactory(null));
         currentDocumentCount++;
         dataMap.put(id, document);
 
@@ -274,7 +277,7 @@ public class DocumentHandler {
     public void writeOutFile (String mapFileName) {
 
         File outfile = new File(mapFileName);
-
+        StringBuilder sb = new StringBuilder();
 
         try (
                 FileWriter fw = new FileWriter(outfile)
@@ -286,7 +289,14 @@ public class DocumentHandler {
             }*/
 
             for (Map.Entry<Integer, Document> entry : dataMap.entrySet()) {
-                fw.write(entry.getKey() + " " + entry.getValue().getDocumentNo() + "\n");
+                sb.append(entry.getKey());
+                sb.append(" ");
+                sb.append(entry.getValue().getDocumentNo());
+                sb.append(" ");
+                sb.append(entry.getValue().getDocumentLength());
+                sb.append("\n");
+                fw.write(sb.toString());
+                sb.setLength(0);
             }
 
             fw.flush();

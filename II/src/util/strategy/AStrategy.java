@@ -6,7 +6,6 @@ import java.util.Map;
 
 abstract class AStrategy {
 
-    @Deprecated
     void outputData (String query, LexMapping lexMapping, Map<Integer, String> mappingData, int[] intStore) {
 
         int prev = 0;

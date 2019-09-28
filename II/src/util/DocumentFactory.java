@@ -41,7 +41,8 @@ public class DocumentFactory {
      * @return The newy created document
      */
     public Document createDocument (String documentNo, String heading, String textData) {
-        return new Document(documentNo, documentRegistry.size() , heading, textData, this);
+        int documentWeight = heading.length() + textData.length();
+        return new Document(documentNo, documentRegistry.size() , heading, textData, documentWeight, this);
     }
 
     /**

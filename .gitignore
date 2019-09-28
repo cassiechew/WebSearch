@@ -86,3 +86,7 @@ fabric.properties
 I (submission)/
 
 *.zip
+
+II/IIDocs/
+
+.idea/

@@ -1,7 +1,6 @@
-import indexingModule.QueryDocumentHandler;
+import queryingModule.QueryDocumentHandler;
 import queryingModule.QueryProcessing;
 
-import java.util.List;
 import java.util.Vector;
 
 public class search {
@@ -18,7 +17,7 @@ public class search {
     private static String map                   = null;
     private static String invlists              = null;
 
-    private static Vector<String> queryTerms      = null;
+    private static Vector<String> queryTerms    = null;
 
     private static int numResults               = 0;
 
@@ -34,8 +33,11 @@ public class search {
         queryDocumentHandler.generateIndexDataFromFiles(lexicon, QueryDocumentHandler.fileType.LEXICON, queryTerms);
         queryDocumentHandler.generateIndexDataFromFiles(map, QueryDocumentHandler.fileType.MAP, queryTerms);
 
-        queryProcessing = new QueryProcessing(invlists, queryDocumentHandler.getLexicon(), queryDocumentHandler.getMapping());
+        queryProcessing = new QueryProcessing(invlists, queryDocumentHandler.getLexicon(),
+                queryDocumentHandler.getMapping(), queryDocumentHandler.getAverageDocumentLength());
 
+        queryProcessing.accumulatorCycle((String[])queryTerms.toArray());
+        queryProcessing.getTopNAccumulators();
     }
 
     /**
@@ -66,6 +68,7 @@ public class search {
                 System.exit(FAILURE);
             }
             if (args[i].equals("-BM25")) {
+                opsArray[i] = true;
 
                 continue;
             }

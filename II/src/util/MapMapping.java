@@ -8,21 +8,29 @@ public class MapMapping {
     private String documentNameID;
 
     /** The number of documents that contain this term */
-    private Vector<Double> docWeights;
+    //private Vector<Double> docWeights;
+
+    private static String[] queryTerms;
+    private int documentWeight;
 
 
 
-    public MapMapping(String documentNameID) {
+    public MapMapping(String documentNameID, int documentWeight) {
         this.documentNameID = documentNameID;
-        this.docWeights = new Vector<>();
+        this.documentWeight = documentWeight;
+        //this.docWeights = new Vector<>();
 
+    }
+
+    public static void setQueryTerms(String[] queryTerms) {
+        MapMapping.queryTerms = queryTerms;
     }
 
     public void addTermWeight (double i) {
-        this.docWeights.addElement(i);
+        //this.docWeights.addElement(i);
     }
 
-
-
-
+    public int getDocumentWeight() {
+        return documentWeight;
+    }
 }

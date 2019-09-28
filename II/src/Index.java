@@ -1,5 +1,5 @@
-import indexing.DocumentHandler;
-import indexing.InvIndexGenerator;
+import indexingModule.DocumentHandler;
+import indexingModule.InvIndexGenerator;
 import util.Document;
 import util.DocumentFactory;
 import java.util.HashMap;

@@ -1,4 +1,4 @@
-package indexingModule;
+package queryingModule;
 
 import queryingModule.BM25;
 import util.LexMapping;
@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
+
+import static queryingModule.QueryDocumentHandler.fileType.MAP;
 
 
 /**
@@ -23,7 +25,8 @@ public class QueryDocumentHandler {
     /** The internal mapping file */
     private HashMap<Integer, MapMapping> mapping = new HashMap<>();
 
-    private int documentCounter = 0;
+    /** Average Document Length */
+    private double averageDocumentLength;
 
     /** An enum of file types that this class will have to deal with */
     public enum fileType {
@@ -40,6 +43,10 @@ public class QueryDocumentHandler {
         return mapping;
     }
 
+    public double getAverageDocumentLength() {
+        return averageDocumentLength;
+    }
+
     /**
      * Generates the indexing data from the inverted list files
      * @param fileToRead The name of the file to read
@@ -49,6 +56,8 @@ public class QueryDocumentHandler {
     public void generateIndexDataFromFiles (String fileToRead, fileType fileType, Vector<String> queryTerms) {
 
         boolean iLfirstLine = false;
+        double totalDocumentsLength = 0;
+        double totalDocuments = 0;
 
         try (
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(fileToRead));
@@ -65,7 +74,10 @@ public class QueryDocumentHandler {
 
                         break;
                     case MAP:
-                        MapMapping mapMapping = new MapMapping(splitStringData[1], 0);
+                        int documentLength = Integer.parseInt(splitStringData[2]);
+                        totalDocumentsLength += documentLength;
+                        totalDocuments += 1;
+                        MapMapping mapMapping = new MapMapping(splitStringData[1], documentLength);
                         mapping.put(Integer.parseInt((splitStringData[0])), mapMapping);
 
                         break;
@@ -73,6 +85,10 @@ public class QueryDocumentHandler {
                         System.out.println("Failed to read");
                         System.exit(1);
                 }
+            }
+
+            if (fileType.equals(MAP)) {
+                this.averageDocumentLength = totalDocumentsLength / totalDocuments;
             }
 
         } catch (IOException e) {
