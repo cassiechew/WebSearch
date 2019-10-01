@@ -30,6 +30,10 @@ public class MapMapping {
         //this.docWeights.addElement(i);
     }
 
+    public String getDocumentNameID() {
+        return documentNameID;
+    }
+
     public int getDocumentWeight() {
         return documentWeight;
     }

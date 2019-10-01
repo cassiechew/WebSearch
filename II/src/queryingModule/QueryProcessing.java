@@ -9,8 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.PriorityQueue;
+import java.util.*;
 
 public class QueryProcessing {
 
@@ -40,9 +39,17 @@ public class QueryProcessing {
         this.averageDocLength = averageDocLength;
     }
 
-    public void getTopNAccumulators() {
+    public ArrayList<Accumulator> getTopNAccumulators(int n) {
+        ArrayList<Accumulator> output = new ArrayList<>();
         accumulatorMinHeap.addAll(accumulators.values());
-        System.out.print(accumulatorMinHeap.toString());
+
+        int c = 0;
+        while(c < n) {
+            output.add(accumulatorMinHeap.poll());
+            c++;
+        }
+        return output;
+        //System.out.print(accumulatorMinHeap.toString());
     }
 
     /**

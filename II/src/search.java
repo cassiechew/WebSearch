@@ -1,7 +1,11 @@
 import queryingModule.QueryDocumentHandler;
 import queryingModule.QueryProcessing;
+import util.Accumulator;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Vector;
+import java.text.DecimalFormat;
 
 public class search {
 
@@ -24,20 +28,44 @@ public class search {
     private static QueryDocumentHandler queryDocumentHandler;
     private static QueryProcessing queryProcessing;
 
+    private static DecimalFormat df = new DecimalFormat("#.###");
+
+
 
     public static void main(String[] args) {
         opsHandler(args);
 
         queryDocumentHandler = new QueryDocumentHandler();
-
+        System.out.println("MEME");
         queryDocumentHandler.generateIndexDataFromFiles(lexicon, QueryDocumentHandler.fileType.LEXICON, queryTerms);
+        System.out.println("MEME");
+
         queryDocumentHandler.generateIndexDataFromFiles(map, QueryDocumentHandler.fileType.MAP, queryTerms);
+        System.out.println("MEME");
+
 
         queryProcessing = new QueryProcessing(invlists, queryDocumentHandler.getLexicon(),
                 queryDocumentHandler.getMapping(), queryDocumentHandler.getAverageDocumentLength());
+        System.out.println("MEME");
 
-        queryProcessing.accumulatorCycle((String[])queryTerms.toArray());
-        queryProcessing.getTopNAccumulators();
+
+        queryProcessing.accumulatorCycle(Arrays.copyOf(queryTerms.toArray(), queryTerms.size(), String[].class));
+        System.out.println("MEME");
+
+        ArrayList<Accumulator> accumulators = queryProcessing.getTopNAccumulators(numResults);
+        System.out.println("MEME");
+
+        int c = 1;
+
+        for (Accumulator a : accumulators) {
+            System.out.println(
+                    ((queryLabel != null) ? queryLabel : "") +
+                            " " + queryDocumentHandler.getMapping().get(a.getDocumentID()).getDocumentNameID() +
+                            " " + c + df.format(a.getPartialSimilarityScore())
+            );
+            c++;
+        }
+
     }
 
     /**
@@ -69,7 +97,7 @@ public class search {
             }
             if (args[i].equals("-BM25")) {
                 opsArray[i] = true;
-
+                opsCount++;
                 continue;
             }
             if (args[i].equals("-q") | args[i].equals("--query-label")) {
@@ -137,15 +165,20 @@ public class search {
                 opsArray[i + 1] = true;
                 opsCount = opsCount + 2;
 
-            }        }
-        for (int i = 0; i < opsArray.length; i++) {
+            }
+        }
+        for (int i = 0; i < args.length; i++) {
+
             if (!opsArray[i]) {
+//                System.out.println("Q TERM FOUND");
                 //currentFile = args[i];
                 queryTerms.add(args[i]);
                 opsCount++;
             }
         }
         if (opsCount != opsArray.length) {
+            System.out.println("Length failure");
+            System.out.println(opsCount + " " + opsArray.length);
             System.exit(FAILURE);
         }
     }
