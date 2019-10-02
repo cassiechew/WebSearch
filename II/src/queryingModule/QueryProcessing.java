@@ -44,7 +44,7 @@ public class QueryProcessing {
         accumulatorMinHeap.addAll(accumulators.values());
 
         int c = 0;
-        while(c < n) {
+        while(c < n && (accumulatorMinHeap.size() > 0)) {
             output.add(accumulatorMinHeap.poll());
             c++;
         }

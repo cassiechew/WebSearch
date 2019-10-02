@@ -4,6 +4,7 @@ import util.Accumulator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Vector;
 import java.text.DecimalFormat;
 
@@ -35,36 +36,42 @@ public class search {
     public static void main(String[] args) {
         opsHandler(args);
 
+        final long starttime = System.currentTimeMillis();
+
         queryDocumentHandler = new QueryDocumentHandler();
-        System.out.println("MEME");
+
         queryDocumentHandler.generateIndexDataFromFiles(lexicon, QueryDocumentHandler.fileType.LEXICON, queryTerms);
-        System.out.println("MEME");
 
         queryDocumentHandler.generateIndexDataFromFiles(map, QueryDocumentHandler.fileType.MAP, queryTerms);
-        System.out.println("MEME");
 
 
         queryProcessing = new QueryProcessing(invlists, queryDocumentHandler.getLexicon(),
                 queryDocumentHandler.getMapping(), queryDocumentHandler.getAverageDocumentLength());
-        System.out.println("MEME");
 
 
         queryProcessing.accumulatorCycle(Arrays.copyOf(queryTerms.toArray(), queryTerms.size(), String[].class));
-        System.out.println("MEME");
 
         ArrayList<Accumulator> accumulators = queryProcessing.getTopNAccumulators(numResults);
-        System.out.println("MEME");
 
+
+        StringBuilder sb = new StringBuilder();
         int c = 1;
 
         for (Accumulator a : accumulators) {
-            System.out.println(
-                    ((queryLabel != null) ? queryLabel : "") +
-                            " " + queryDocumentHandler.getMapping().get(a.getDocumentID()).getDocumentNameID() +
-                            " " + c + df.format(a.getPartialSimilarityScore())
-            );
+            sb.append(((queryLabel != null) ? queryLabel + " " : ""));
+            sb.append(queryDocumentHandler.getMapping().get(a.getDocumentID()).getDocumentNameID());
+            sb.append(" ");
+            sb.append(c);
+            sb.append(" ");
+            sb.append(df.format(a.getPartialSimilarityScore()));
+            System.out.println(sb.toString());
+            sb.setLength(0);
             c++;
         }
+
+        final long endtime = System.currentTimeMillis();
+
+        System.out.println((endtime - starttime) + " ms");
 
     }
 
