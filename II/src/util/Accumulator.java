@@ -4,17 +4,35 @@ package util;
 /**
  * A helper class to contain information relating to the accumulator
  */
-public class Accumulator implements Comparable{
+public class Accumulator implements Comparable {
 
-    /** The id of the document this accumulator is related to */
+    /**
+     * The id of the document this accumulator is related to
+     */
     private int documentID;
 
-    /** The similarity score calculated using Okapi BM 25 */
+    /**
+     * The term for the Term selection value
+     */
+    private String queryTerm;
+
+    /**
+     * The similarity score calculated using Okapi BM 25
+     */
     private double partialSimilarityScore;
 
-    public Accumulator (int documentID, double partialSimilarityScore) {
+    public Accumulator(int documentID, double partialSimilarityScore) {
         this.documentID = documentID;
         this.partialSimilarityScore = partialSimilarityScore;
+    }
+
+    public Accumulator(String queryTerm, double partialSimilarityScore) {
+        this.queryTerm = queryTerm;
+        this.partialSimilarityScore = partialSimilarityScore;
+    }
+
+    public String getQueryTerm() {
+        return queryTerm;
     }
 
     public void setPartialSimilarityScore(double partialSimilarityScore) {

@@ -7,22 +7,24 @@ package util;
 public class LexMapping {
 
     //private String word;
-    /** The number of documents that contain this term */
+    /**
+     * The number of documents that contain this term
+     */
     private int noDocuments;
 
-    /** The offset position to start reading in the inverted list file. */
+    /**
+     * The offset position to start reading in the inverted list file.
+     */
     private Integer offset;
 
 
-
     public LexMapping(int noDocuments, Integer offset) {
-        //this.word   = word;
         this.noDocuments = noDocuments;
         this.offset = offset;
     }
 
     //public String getWord() {
-        //return word;
+    //return word;
     //}
 
     public int getNoDocuments() {
@@ -32,5 +34,4 @@ public class LexMapping {
     public Integer getOffset() {
         return offset;
     }
-
 }

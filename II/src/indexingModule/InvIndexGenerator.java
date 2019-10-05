@@ -16,20 +16,28 @@ import java.util.*;
 public class InvIndexGenerator {
 
 
-    /** Contains each unique term that occurs in the collection and a pointer to the inverted list for that term */
+    /**
+     * Contains each unique term that occurs in the collection and a pointer to the inverted list for that term
+     */
     private File lexiconFile;
 
-    /** Contains the inverted list information, consisting only of numerical data */
+    /**
+     * Contains the inverted list information, consisting only of numerical data
+     */
     private File invlistsFile;
 
-    /** The compressor that will be used to handle all compression/decompression of data */
+    /**
+     * The compressor that will be used to handle all compression/decompression of data
+     */
     private Compressor compressor;
 
-    /** The internal representation of the lexicon-inverted list */
+    /**
+     * The internal representation of the lexicon-inverted list
+     */
     private Map<String, SortedMap<Integer, Integer>> lexiconInvlist;
 
 
-    public InvIndexGenerator (String compressionStrategy) {
+    public InvIndexGenerator(String compressionStrategy) {
 
         initFiles(compressionStrategy);
 
@@ -42,16 +50,17 @@ public class InvIndexGenerator {
 
     /**
      * Initializes the files for indexing
+     *
      * @param compressionStrategy The strategy to use to compress the file
      */
-    private void initFiles (String compressionStrategy) {
+    private void initFiles(String compressionStrategy) {
 
         final String INVLISTFILENAME = "invlist";
         final String INVLISTFILENAMEVB = "invlistvb";
         final String LEXICONFILENAME = "lexicon";
         final String LEXICONFILENAMEVB = "lexiconvb";
 
-        switch(compressionStrategy) {
+        switch (compressionStrategy) {
             case "none":
                 invlistsFile = new File(INVLISTFILENAME);
                 lexiconFile = new File(LEXICONFILENAME);
@@ -70,7 +79,7 @@ public class InvIndexGenerator {
     /**
      * A quick method to remove remaining file data
      */
-    private void clearFiles () {
+    private void clearFiles() {
         try (
                 PrintWriter printWriter = new PrintWriter(invlistsFile);
                 PrintWriter secondPrintWriter = new PrintWriter(lexiconFile)
@@ -85,12 +94,13 @@ public class InvIndexGenerator {
 
     /**
      * Creates the full inverted list data
+     *
      * @param documentList The list of documents to process
      */
-    public void createList (List<Document> documentList, boolean verbose) {
+    public void createList(List<Document> documentList, boolean verbose) {
 
         for (Document d : documentList
-             ) {
+        ) {
 
             mapLexiconData(d.getDocumentID(), d.getHeadline().split(" "), verbose);
             mapLexiconData(d.getDocumentID(), d.getTextData().split(" "), verbose);
@@ -104,10 +114,11 @@ public class InvIndexGenerator {
     /**
      * The mapping function for the lexicon data. It reads through the document headers and text content and maps the
      * words and frequencies of each word to the internal inverted list
+     *
      * @param documentID The ID of the current document being processed
-     * @param textData The text data to process from the current document
+     * @param textData   The text data to process from the current document
      */
-    private void mapLexiconData (int documentID, String[] textData, boolean verbose) {
+    private void mapLexiconData(int documentID, String[] textData, boolean verbose) {
 
         for (String s : textData) {
             if (verbose) System.out.println(s);
@@ -116,12 +127,10 @@ public class InvIndexGenerator {
                 SortedMap<Integer, Integer> newSet = new TreeMap<>();
                 newSet.put(documentID, 1);
                 lexiconInvlist.put(s, newSet);
-            }
-            else {
+            } else {
                 if (lexiconInvlist.get(s).containsKey(documentID)) {
                     lexiconInvlist.get(s).replace(documentID, lexiconInvlist.get(s).get(documentID) + 1);
-                }
-                else {
+                } else {
                     lexiconInvlist.get(s).put(documentID, 1);
                 }
             }
@@ -132,7 +141,7 @@ public class InvIndexGenerator {
     /**
      * The branching function to start the writing to the outfiles
      */
-    public void writeOutfileData () {
+    public void writeOutfileData() {
 
         Map<String, Long> lexiconPairData;
 
@@ -144,14 +153,15 @@ public class InvIndexGenerator {
 
     /**
      * Writes the lexicon file, containing the current indexed words and the pointer location in the index file
+     *
      * @param lexiconPairData The map of the lexicon and pointer data
      */
-    private void writeLexiconData (Map<String, Long> lexiconPairData) {
+    private void writeLexiconData(Map<String, Long> lexiconPairData) {
 
         try (
                 FileWriter fileWriter = new FileWriter(lexiconFile);
                 BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)
-        ){
+        ) {
             StringBuilder sb = new StringBuilder();
 
             for (String key : lexiconPairData.keySet()) {
@@ -175,12 +185,12 @@ public class InvIndexGenerator {
     }
 
 
-
     /**
      * Writes the numerical-binary data for the inverted list
+     *
      * @return returns the mapping of the words to pointer locations in the binary file
      */
-    private Map<String, Long> writeInvertedListData () {
+    private Map<String, Long> writeInvertedListData() {
 
         Map<String, Long> lexiconPairData = new HashMap<>();
 
@@ -189,20 +199,20 @@ public class InvIndexGenerator {
         try (
                 FileOutputStream fileOutputStream = new FileOutputStream(invlistsFile);//RandomAccessFile invlistRAFile = new RandomAccessFile(invlistsFile, "rw");
                 FileChannel fileChannel = fileOutputStream.getChannel();
-        ){
+        ) {
 
-            for (String key: lexiconInvlist.keySet()
-                 ) {
+            for (String key : lexiconInvlist.keySet()
+            ) {
                 SortedMap<Integer, Integer> mappingData = lexiconInvlist.get(key);
                 lexiconPairData.put(key, fileChannel.position());
 
                 prev = 0;
                 for (Integer documentID : mappingData.keySet()) {
 
-                    byte[] write = compressor.compress( documentID - prev);
+                    byte[] write = compressor.compress(documentID - prev);
                     fileChannel.write(ByteBuffer.wrap(write));
 
-                    write = compressor.compress( mappingData.get(documentID));
+                    write = compressor.compress(mappingData.get(documentID));
                     fileChannel.write(ByteBuffer.wrap(write));
 
                     prev = documentID;

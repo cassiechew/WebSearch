@@ -6,9 +6,13 @@ package util;
  */
 public class Document {
 
-    /** DOCNO */
+    /**
+     * DOCNO
+     */
     private String documentNo;
-    /** Unique Identifier */
+    /**
+     * Unique Identifier
+     */
     private int documentID;
 
     private String headline;
@@ -18,8 +22,8 @@ public class Document {
     private long documentLocationInFileByLine;
 
 
-    public Document (String documentNo, int documentID, String headline, String textData, int documentWeight,
-                     long documentLocationInFileByLine, DocumentFactory documentFactory) {
+    public Document(String documentNo, int documentID, String headline, String textData, int documentWeight,
+                    long documentLocationInFileByLine, DocumentFactory documentFactory) {
         super();
         this.documentNo = documentNo;
         this.documentID = documentID;
@@ -47,9 +51,13 @@ public class Document {
         return textData;
     }
 
-    public int getDocumentLength() { return documentLength; }
+    public int getDocumentLength() {
+        return documentLength;
+    }
 
-    public String getAllText() { return headline + " " + textData; }
+    public String getAllText() {
+        return headline + " " + textData;
+    }
 
     public long getDocumentLocationInFileByLine() {
         return documentLocationInFileByLine;
@@ -58,7 +66,7 @@ public class Document {
     /**
      * Prints the document
      */
-    public void printDoc () {
+    public void printDoc() {
         System.out.println(documentID);
         System.out.println(documentNo);
         System.out.println(headline);

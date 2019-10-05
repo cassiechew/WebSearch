@@ -8,23 +8,23 @@ import java.util.Map;
 
 public class Index {
 
-    private static final String MAPFILENAME     = "map";
+    private static final String MAPFILENAME = "map";
 
 
-    private static boolean verbose      = false;
-    private static boolean hasStoplist  = false;
-    private static boolean timed        = false;
-    private static boolean compress     = false;
+    private static boolean verbose = false;
+    private static boolean hasStoplist = false;
+    private static boolean timed = false;
+    private static boolean compress = false;
 
     private final static int FAILURE = 1;
 
-    private static List<Document> parsedData    = null;
+    private static List<Document> parsedData = null;
 
-    private static String currentFile           = null;
-    private static String stopfile              = null;
-    private static String compressionStrategy   = null;
+    private static String currentFile = null;
+    private static String stopfile = null;
+    private static String compressionStrategy = null;
 
-    public static void main (String[] args) {
+    public static void main(String[] args) {
 
         DocumentHandler documentHandler = new DocumentHandler();
         DocumentFactory documentFactory;
@@ -86,9 +86,9 @@ public class Index {
      * Prints all document information
      */
     @Deprecated
-    private static void printAllDocs () {
+    private static void printAllDocs() {
         for (Document d : parsedData
-                ) {
+        ) {
             System.out.println(parsedData.get(parsedData.indexOf(d)).getDocumentID());
             System.out.println(parsedData.get(parsedData.indexOf(d)).getDocumentNo());
             System.out.println(parsedData.get(parsedData.indexOf(d)).getHeadline());
@@ -100,6 +100,7 @@ public class Index {
 
     /**
      * Exits the program after a failure
+     *
      * @param arg The argument to reference for failure
      */
     private static void exit(String arg) {
@@ -111,12 +112,13 @@ public class Index {
 
     /**
      * A simple handler for CLI options management
+     *
      * @param args The cli options
      */
-    private static void opsHandler (String[] args) {
+    private static void opsHandler(String[] args) {
 
-        boolean[] opsArray  = new boolean[args.length]; //dynamic placement of args
-        int opsCount        = 0;
+        boolean[] opsArray = new boolean[args.length]; //dynamic placement of args
+        int opsCount = 0;
 
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals("-h") | args[i].equals("--help")) {
@@ -134,9 +136,9 @@ public class Index {
                 opsArray[i] = true;
                 extOpsChecker(args, i);
 
-                compressionStrategy = args[i+1];
+                compressionStrategy = args[i + 1];
 
-                opsArray[i+1] = true;
+                opsArray[i + 1] = true;
                 opsCount = opsCount + 2;
                 continue;
             }
@@ -145,9 +147,9 @@ public class Index {
                 opsArray[i] = true;
                 extOpsChecker(args, i);
 
-                stopfile = args[i+1];
+                stopfile = args[i + 1];
 
-                opsArray[i+1] = true;
+                opsArray[i + 1] = true;
                 opsCount = opsCount + 2;
                 continue;
             }
@@ -169,10 +171,9 @@ public class Index {
     }
 
     private static void extOpsChecker(String[] args, int i) {
-        if (args.length <= i+1) {
+        if (args.length <= i + 1) {
             exit(args[i]);
-        }
-        else if (args[i+1].startsWith("-")) {
+        } else if (args[i + 1].startsWith("-")) {
             exit(args[i]);
         }
     }
@@ -183,7 +184,7 @@ public class Index {
      */
     private static void usage() {
         System.out.println("Usage: Index [-p|--print] [-s|-stoplist <src>] [-t, --time]\n" +
-                           "          [-c, --compress <strategy>] [-h, --help] <source file>");
+                "          [-c, --compress <strategy>] [-h, --help] <source file>");
         System.out.println("Creates an inverted index of the supplied document");
         System.out.println("Options:");
         System.out.println("  -p, --print            Prints the cleaned text");

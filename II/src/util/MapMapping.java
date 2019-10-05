@@ -8,13 +8,19 @@ import java.util.Vector;
  */
 public class MapMapping {
 
-    /** The name of the document in its raw ID */
+    /**
+     * The name of the document in its raw ID
+     */
     private String documentNameID;
 
-    /** The weight of the document being the length of the document */
+    /**
+     * The weight of the document being the length of the document
+     */
     private int documentWeight;
 
-    /** The line number of where the document begins */
+    /**
+     * The line number of where the document begins
+     */
     private int documentLocationPointer;
 
 

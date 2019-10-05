@@ -1,35 +1,40 @@
 import indexingModule.DocumentHandler;
 import queryingModule.QueryDocumentHandler;
 import queryingModule.QueryProcessing;
+import queryingModule.TSV;
 import util.Accumulator;
 import util.Document;
 import util.DocumentFactory;
 import util.MapMapping;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.*;
 import java.text.DecimalFormat;
 
 public class search {
 
 
-    private static boolean BM25         = false;
-    private static boolean hasStoplist  = false;
+    private static boolean BM25 = false;
+    private static boolean hasStoplist = false;
 
     private final static int FAILURE = 1;
 
-    private static String stopfile              = null;
-    private static String queryLabel            = null;
-    private static String lexicon               = null;
-    private static String map                   = null;
-    private static String invlists              = null;
+    private static String stopfile = null;
+    private static String queryLabel = null;
+    private static String lexicon = null;
+    private static String map = null;
+    private static String invlists = null;
 
-    private static Vector<String> queryTerms    = null;
+    private static Vector<String> queryTerms = null;
 
-    private static int numResults               = 0;
+    private static int numResults = 0;
 
-    private static boolean advanced             = false;
-    private static int noRelevantDocs           = 1;
-    private static int noTermsToAdd             = 0;
+    private static boolean advanced = false;
+    private static int noRelevantDocs = 1;
+    private static int noTermsToAdd = 0;
     private static String sourcefile;
 
     private static DecimalFormat df = new DecimalFormat("#.###");
@@ -44,15 +49,14 @@ public class search {
         PriorityQueue<Accumulator> accumulators = new PriorityQueue<>();
         Vector<String> termsToPrint = new Vector<>(queryTerms);
 
-        processQueriesToAccumulators(queryDocumentHandler, accumulators);
-
+        processQueriesToAccumulators(queryDocumentHandler, accumulators, (advanced) ? 0 : numResults);
         if (advanced) {
             advancedProcessing(queryDocumentHandler, accumulators);
 
             // To reset the min heap
             accumulators = new PriorityQueue<>();
 
-            processQueriesToAccumulators(queryDocumentHandler, accumulators);
+            processQueriesToAccumulators(queryDocumentHandler, accumulators, numResults);
 
         }
 
@@ -63,46 +67,65 @@ public class search {
 
     /**
      * The process for advanced ranked retrieval
+     *
      * @param queryDocumentHandler The query document handler
-     * @param accumulators The accumulators
+     * @param accumulators         The accumulators
      */
-    private static void advancedProcessing (
+    private static void advancedProcessing(
             QueryDocumentHandler queryDocumentHandler, PriorityQueue<Accumulator> accumulators
     ) {
 
         Map<Integer, Document> documentMap = new HashMap<>();
         Map<Integer, Integer> offsets = new HashMap<>();
         Map<Integer, MapMapping> documentMappings = queryDocumentHandler.getMapping();
+
+        DocumentHandler documentHandler = new DocumentHandler();
         DocumentFactory documentFactory = new DocumentFactory(documentMap);
 
+        List<Integer> listOfDocumentsContainingT = new Vector<>();
+
         for (int i = 0; i < noRelevantDocs && i < accumulators.size(); i++) {
-            int start = documentMappings.get(Objects.requireNonNull(accumulators.poll()).getDocumentID()).getDocumentLocationPointer();
-            int end = documentMappings.get(Objects.requireNonNull(accumulators.poll()).getDocumentID() + 1).getDocumentLocationPointer();
+            Accumulator accumulator = accumulators.poll();
+
+            assert accumulator != null;
+            listOfDocumentsContainingT.add(accumulator.getDocumentID());
+
+            int start = documentMappings.get(Objects.requireNonNull(accumulator).getDocumentID()).getDocumentLocationPointer();
+            int end = documentMappings.get(Objects.requireNonNull(accumulator).getDocumentID() + 1).getDocumentLocationPointer();
 
             offsets.put(start, end);
         }
 
-        DocumentHandler documentHandler = new DocumentHandler();
         documentHandler.setCurrentFile(sourcefile);
         documentHandler.setDocumentFactory(documentFactory);
 
-        int original = noTermsToAdd;
+        PriorityQueue<Accumulator> queryCandidates = new PriorityQueue<>();
+        Vector<String> uniqueQueries = new Vector<>();
+        Vector<Integer> poolDocumentIds = new Vector<>();
 
-        for (int l : offsets.keySet()) {
-//            if (noTermsToAdd <= 0) { break; }
-            for (Document d : documentHandler.readFile(l, offsets.get(l))) {
-//                if (noTermsToAdd <= 0) { break; }
-                for (String s : d.getAllText().split(" ")) {
-                    if (noTermsToAdd <= 0) {
-                        noTermsToAdd = original;
-                        break;
+        try (
+                RandomAccessFile invlist = new RandomAccessFile(new File(invlists), "r")
+                ) {
+
+            for (int l : offsets.keySet()) {
+                for (Document d : documentHandler.readFile(l, offsets.get(l))) {
+                    poolDocumentIds.add(d.getDocumentID());
+
+                    for (String s : d.getAllText().split(" ")) {
+                        if (uniqueQueries.contains(s)) continue;
+                        uniqueQueries.add(s);
+                        queryCandidates.add(new Accumulator(s, TSV.calculateTSV(s, queryDocumentHandler.getLexicon(), invlist,
+                                queryDocumentHandler.getMapping().size(), listOfDocumentsContainingT)));
                     }
-                    if (!queryTerms.contains(s)) {
-                        queryTerms.add(s);
-                        noTermsToAdd--;
-                    }
+
                 }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        for (int i = 0; i < numResults && i < queryCandidates.size(); i++) {
+            queryTerms.add(Objects.requireNonNull(queryCandidates.poll()).getQueryTerm());
         }
     }
 
@@ -110,12 +133,12 @@ public class search {
     /**
      * Function to print the results
      *
-     * @param starttime The time when the program started
-     * @param termsToPrint The initial terms in the query
-     * @param accumulators The accumulator scores
+     * @param starttime            The time when the program started
+     * @param termsToPrint         The initial terms in the query
+     * @param accumulators         The accumulator scores
      * @param queryDocumentHandler The query document handler
      */
-    private static void printResults (
+    private static void printResults(
             final long starttime, Vector<String> termsToPrint,
             PriorityQueue<Accumulator> accumulators, QueryDocumentHandler queryDocumentHandler
     ) {
@@ -123,8 +146,10 @@ public class search {
         StringBuilder sb = new StringBuilder();
         int c = 1;
 
-        System.out.println("Your search Query");
-        for (String s : termsToPrint) { System.out.print(s + " "); }
+        System.out.print("Here are the results for: ");
+        for (String s : termsToPrint) {
+            System.out.print(s + " ");
+        }
         System.out.println();
         for (Accumulator a : accumulators) {
             sb.append(((queryLabel != null) ? queryLabel + " " : ""));
@@ -142,11 +167,18 @@ public class search {
 
         System.out.println((endtime - starttime) + " ms");
 
+        System.out.println(TSV.factorialCalculation(3));
+        System.out.println(TSV.factorialCalculation(6));
+
+        System.out.println(TSV.factorialCalculation(40));
+
+
     }
 
 
     /**
      * A function for stopping the queries.
+     *
      * @param queries
      * @return
      */
@@ -163,29 +195,33 @@ public class search {
 
     /**
      * The function that runs the ranking of documents
+     *
      * @param queryDocumentHandler The handler to process documents related to the search
-     * @param accumulators The min heap of the accumulators
+     * @param accumulators         The min heap of the accumulators
      */
-    private static void processQueriesToAccumulators (
-            QueryDocumentHandler queryDocumentHandler, PriorityQueue<Accumulator> accumulators) {
+    private static void processQueriesToAccumulators(
+            QueryDocumentHandler queryDocumentHandler, PriorityQueue<Accumulator> accumulators, int numResultsToGet) {
+
+        QueryProcessing queryProcessing;
 
         if (hasStoplist) queryTerms = stop(queryTerms);
 
-        queryDocumentHandler.generateIndexDataFromFiles(lexicon, QueryDocumentHandler.fileType.LEXICON, queryTerms);
+        queryDocumentHandler.generateIndexDataFromFiles(lexicon, QueryDocumentHandler.fileType.LEXICON);
 
-        queryDocumentHandler.generateIndexDataFromFiles(map, QueryDocumentHandler.fileType.MAP, queryTerms);
+        queryDocumentHandler.generateIndexDataFromFiles(map, QueryDocumentHandler.fileType.MAP);
 
-        QueryProcessing queryProcessing = new QueryProcessing(invlists, queryDocumentHandler.getLexicon(),
+        queryProcessing = new QueryProcessing(invlists, queryDocumentHandler.getLexicon(),
                 queryDocumentHandler.getMapping(), queryDocumentHandler.getAverageDocumentLength());
 
         queryProcessing.accumulatorCycle(Arrays.copyOf(queryTerms.toArray(), queryTerms.size(), String[].class));
 
-        accumulators.addAll(queryProcessing.getTopNAccumulators(numResults));
+        accumulators.addAll(queryProcessing.getTopNAccumulators(numResultsToGet));
 
     }
 
     /**
      * Exits the program after a failure
+     *
      * @param arg The argument to reference for failure
      */
     private static void exit(String arg) {
@@ -197,12 +233,13 @@ public class search {
 
     /**
      * A simple handler for CLI options management
+     *
      * @param args The cli options
      */
-    private static void opsHandler (String[] args) {
+    private static void opsHandler(String[] args) {
 
-        boolean[] opsArray  = new boolean[args.length]; //dynamic placement of args
-        int opsCount        = 0;
+        boolean[] opsArray = new boolean[args.length]; //dynamic placement of args
+        int opsCount = 0;
 
         queryTerms = new Vector<>();
 
@@ -265,9 +302,9 @@ public class search {
                 opsArray[i] = true;
                 extOpsChecker(args, i);
 
-                stopfile = args[i+1];
+                stopfile = args[i + 1];
 
-                opsArray[i+1] = true;
+                opsArray[i + 1] = true;
                 opsCount = opsCount + 2;
                 continue;
             }
@@ -289,11 +326,11 @@ public class search {
 
 
                 extOpsChecker(args, i);
-                extOpsChecker(args, i+1);
+                extOpsChecker(args, i + 1);
 
                 noRelevantDocs = Integer.parseInt(args[i + 1]);
                 noTermsToAdd = Integer.parseInt((args[i + 2]));
-                sourcefile = args[i+3];
+                sourcefile = args[i + 3];
 
                 opsArray[i + 1] = true;
                 opsArray[i + 2] = true;
@@ -321,15 +358,12 @@ public class search {
     }
 
     private static void extOpsChecker(String[] args, int i) {
-        if (args.length <= i+1) {
+        if (args.length <= i + 1) {
             exit(args[i]);
-        }
-        else if (args[i+1].startsWith("-")) {
+        } else if (args[i + 1].startsWith("-")) {
             exit(args[i]);
         }
     }
-
-
 
 
     /**

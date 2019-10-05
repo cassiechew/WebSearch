@@ -9,15 +9,18 @@ import java.util.Map;
 public class DocumentFactory {
 
 
-    /** The internal registry of all created documents */
+    /**
+     * The internal registry of all created documents
+     */
     private Map<Integer, Document> documentRegistry;
 
 
     /**
      * The constructor of the factory
+     *
      * @param documentRegistry the initial instantiation of the document registry
      */
-    public DocumentFactory (Map<Integer, Document> documentRegistry) {
+    public DocumentFactory(Map<Integer, Document> documentRegistry) {
         super();
         this.documentRegistry = documentRegistry;
     }
@@ -25,8 +28,9 @@ public class DocumentFactory {
 
     /**
      * Registers a document with the registry with the supplied ID
+     *
      * @param documentID The ID to register with
-     * @param document THe document to register
+     * @param document   THe document to register
      */
     void registerDocument(Integer documentID, Document document) {
         this.documentRegistry.put(documentID, document);
@@ -35,21 +39,23 @@ public class DocumentFactory {
 
     /**
      * Creates a document and returns it
+     *
      * @param documentNo The external ID of the document
-     * @param heading The heading of the document
-     * @param textData The text content of the document
+     * @param heading    The heading of the document
+     * @param textData   The text content of the document
      * @return The newy created document
      */
-    public Document createDocument (String documentNo, String heading, String textData, long documentLocationInFile) {
+    public Document createDocument(String documentNo, String heading, String textData, long documentLocationInFile) {
         int documentWeight = heading.length() + textData.length();
-        return new Document(documentNo, documentRegistry.size() , heading, textData, documentWeight, documentLocationInFile, this);
+        return new Document(documentNo, documentRegistry.size(), heading, textData, documentWeight, documentLocationInFile, this);
     }
 
     /**
      * Returns the document registry
+     *
      * @return the document registry
      */
-    public Map<Integer, Document> getDocumentRegistry () {
+    public Map<Integer, Document> getDocumentRegistry() {
         return this.documentRegistry;
     }
 }
