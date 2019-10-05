@@ -31,6 +31,17 @@ public class DocumentHandler {
     private DocumentFactory documentFactory;
     private int currentDocumentCount;
 
+    private StringBuilder documentNo = new StringBuilder();
+    private StringBuilder header = new StringBuilder();
+    private StringBuilder textData = new StringBuilder();
+
+    private long documentLocationInFile = 0;
+
+
+    private boolean readHeader = false;
+    private boolean readText = false;
+
+
 
     public void setCurrentFile(String fileName) {
         currentFile = new File(fileName);
@@ -54,80 +65,55 @@ public class DocumentHandler {
     public List<Document> readFile() {   //read file and map doc ID (0,1,2....) to docNo
 
         List<Document> documentList = new Vector<>();
-
-        StringBuilder documentNo = new StringBuilder();
-        StringBuilder header = new StringBuilder();
-        StringBuilder textData = new StringBuilder();
-
         String buffer;
 
-        boolean readHeader = false;
-        boolean readText = false;
 
         this.dataMap = new HashMap<>();
 
-        //char[] animationChars = new char[]{'|', '/', '-', '\\'};
-
         try (
                 FileReader fileReader = new FileReader(this.currentFile);
-                BufferedReader reader = new BufferedReader(fileReader);
+                LineNumberReader reader = new LineNumberReader(fileReader);
         ){
-
+            this.documentLocationInFile = reader.getLineNumber();
             while ((buffer = reader.readLine()) != null) {
 
                 //System.out.print("Processing: " + (documentList.size() + 1) + " Documents read... " + "\r");
+                documentProcessor(documentList, buffer, reader);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Oops! We failed at reading the file!");
+        }
+
+        syncDataMap();
+        return documentList;
+
+    }
+
+    /**
+     * Quick word processing method
+     * @return An arraylist of the produced documents from the infile
+     */
+    public List<Document> readFile(int startingOffset, int endingOffset) {   //read file and map doc ID (0,1,2....) to docNo
+
+        List<Document> documentList = new Vector<>();
+        String buffer;
 
 
-                /* This checks if the document has ended and will generate a document object */
-                if (buffer.equals(SwitchTags.CLOSEDOC.getText())) {
-                    documentList.add(this.documentFactory.createDocument(
-                            documentNo.toString(),
-                            (hasStopFile) ? stoppingFunction(header) : header.toString(),
-                            (hasStopFile) ? stoppingFunction(textData) : textData.toString()));
-                    documentNo.setLength(0);
-                    header.setLength(0);
-                    textData.setLength(0);
-                }
+        this.dataMap = new HashMap<>();
 
+        try (
+                FileReader fileReader = new FileReader(this.currentFile);
+                LineNumberReader reader = new LineNumberReader(fileReader);
+        ){
+            this.documentLocationInFile = reader.getLineNumber();
 
-                /* These check if there is any key tags that appear for relevant information to start gathering */
-                if (buffer.equals(SwitchTags.HEADLINE.getText()) || buffer.equals(SwitchTags.CLOSEHEAD.getText())) {
-                    readHeader = !readHeader;
-                }
-                else if (buffer.equals(SwitchTags.TEXT.getText()) || buffer.equals(SwitchTags.CLOSETEXT.getText())) {
-                    readText = !readText;
-                }
-                else if (buffer.contains(SwitchTags.DOCNO.getText()) || buffer.contains(SwitchTags.CLOSEDOCNO.getText())) {
-                    buffer = buffer.replace(SwitchTags.DOCNO.getText() + " ", "");
-                    buffer = buffer.replace(" " + SwitchTags.CLOSEDOCNO.getText(), "");
-                    documentNo.append(buffer);
-                }
+            while ((buffer = reader.readLine()) != null) {
+                if (reader.getLineNumber() == endingOffset) break;
+                if (reader.getLineNumber() < startingOffset) continue;
+                documentProcessor(documentList, buffer, reader);
 
-
-                /* This reads the heading of the current document being read */
-                if (readHeader) {
-
-                    if (buffer.equals(SwitchTags.HEADLINE.getText())) {
-                        continue;
-                    }
-
-                    if (buffer.equals(SkipTags.PARA.getText()) || buffer.equals(SkipTags.CLOSEPARA.getText()) ||
-                            buffer.equals(SkipTags.TEXT.getText()) || buffer.equals(SkipTags.HEADLINE.getText())) {
-                        continue;
-                    }
-                    header.append(processString(buffer));
-                }
-
-                /* This reads the text content of the current document */
-                else if (readText) {
-
-                    if (buffer.equals(SkipTags.PARA.getText()) || buffer.equals(SkipTags.CLOSEPARA.getText()) ||
-                            buffer.equals(SkipTags.TEXT.getText()) || buffer.equals(SkipTags.HEADLINE.getText())) {
-                        continue;
-                    }
-
-                    textData.append(processString(buffer));
-                }
             }
 
         } catch (Exception e) {
@@ -141,7 +127,74 @@ public class DocumentHandler {
     }
 
 
+    private void documentProcessor(List<Document> documentList, String buffer, LineNumberReader reader) {
 
+        /* This checks if the document has ended and will generate a document object */
+        if (buffer.equals(SwitchTags.CLOSEDOC.getText())) {
+            documentList.add(this.documentFactory.createDocument(
+                    documentNo.toString(),
+                    (hasStopFile) ? stoppingFunction(header) : header.toString(),
+                    (hasStopFile) ? stoppingFunction(textData) : textData.toString(),
+                    this.documentLocationInFile));
+            documentNo.setLength(0);
+            header.setLength(0);
+            textData.setLength(0);
+            this.documentLocationInFile = reader.getLineNumber();
+
+        }
+
+        documentTagSwitcher(buffer);
+        documentContentReader(buffer);
+
+    }
+
+
+    /**
+     * A function to read the content of documents
+     * @param buffer The current string being read
+     */
+    private void documentContentReader(String buffer) {
+        /* This reads the heading of the current document being read */
+        if (readHeader || readText) {
+
+            if (buffer.equals(SwitchTags.HEADLINE.getText())) {
+                return;
+            }
+
+            if (buffer.equals(SkipTags.PARA.getText()) || buffer.equals(SkipTags.CLOSEPARA.getText()) ||
+                    buffer.equals(SkipTags.TEXT.getText()) || buffer.equals(SkipTags.HEADLINE.getText())) {
+                return;
+            }
+            if (readHeader) {
+
+                header.append(processString(buffer));
+            }
+            else {
+
+                textData.append(processString(buffer));
+            }
+        }
+    }
+
+
+    /**
+     * A function to quickly flag when the reader encounters a start/stop reading tag
+     * @param buffer The current string being read
+     */
+    private void documentTagSwitcher(String buffer) {
+        /* These check if there is any key tags that appear for relevant information to start gathering */
+        if (buffer.equals(SwitchTags.HEADLINE.getText()) || buffer.equals(SwitchTags.CLOSEHEAD.getText())) {
+            readHeader = !readHeader;
+        }
+        else if (buffer.equals(SwitchTags.TEXT.getText()) || buffer.equals(SwitchTags.CLOSETEXT.getText())) {
+            readText = !readText;
+        }
+        else if (buffer.contains(SwitchTags.DOCNO.getText()) || buffer.contains(SwitchTags.CLOSEDOCNO.getText())) {
+            buffer = buffer.replace(SwitchTags.DOCNO.getText() + " ", "");
+            buffer = buffer.replace(" " + SwitchTags.CLOSEDOCNO.getText(), "");
+            documentNo.append(buffer);
+        }
+    }
 
 
 
@@ -230,7 +283,7 @@ public class DocumentHandler {
      * @param textData The string of data to remove the stop words from
      * @return The string with the stop words removed
      */
-    private String stoppingFunction (StringBuilder textData) {
+    public String stoppingFunction (StringBuilder textData) {
 
         String[] textArray = textData.toString().split(" ");
         //String hash;
@@ -262,7 +315,7 @@ public class DocumentHandler {
     private Document generateDocument (String documentNo, String heading, String textData) {
 
         int id = currentDocumentCount;
-        Document document = new Document(documentNo, id, heading, textData, 0,new DocumentFactory(null));
+        Document document = new Document(documentNo, id, heading, textData, 0, 0,new DocumentFactory(null));
         currentDocumentCount++;
         dataMap.put(id, document);
 
@@ -294,6 +347,8 @@ public class DocumentHandler {
                 sb.append(entry.getValue().getDocumentNo());
                 sb.append(" ");
                 sb.append(entry.getValue().getDocumentLength());
+                sb.append(" ");
+                sb.append(entry.getValue().getDocumentLocationInFileByLine());
                 sb.append("\n");
                 fw.write(sb.toString());
                 sb.setLength(0);
@@ -304,12 +359,5 @@ public class DocumentHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
-
-
-
-
-
-
 }

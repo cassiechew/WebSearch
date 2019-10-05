@@ -1,10 +1,16 @@
 package util;
 
+
+/**
+ * A helper class to contain information relating to the accumulator
+ */
 public class Accumulator implements Comparable{
 
+    /** The id of the document this accumulator is related to */
     private int documentID;
 
-    private double partialSimilarityScore = 0;
+    /** The similarity score calculated using Okapi BM 25 */
+    private double partialSimilarityScore;
 
     public Accumulator (int documentID, double partialSimilarityScore) {
         this.documentID = documentID;
@@ -25,7 +31,6 @@ public class Accumulator implements Comparable{
 
     @Override
     public int compareTo(Object o) {
-        Accumulator temp = (Accumulator)o;
         return Double.compare(((Accumulator) o).partialSimilarityScore, this.partialSimilarityScore);
     }
 }

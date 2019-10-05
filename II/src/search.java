@@ -1,11 +1,12 @@
+import indexingModule.DocumentHandler;
 import queryingModule.QueryDocumentHandler;
 import queryingModule.QueryProcessing;
 import util.Accumulator;
+import util.Document;
+import util.DocumentFactory;
+import util.MapMapping;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Vector;
+import java.util.*;
 import java.text.DecimalFormat;
 
 public class search {
@@ -26,11 +27,12 @@ public class search {
 
     private static int numResults               = 0;
 
-    private static QueryDocumentHandler queryDocumentHandler;
-    private static QueryProcessing queryProcessing;
+    private static boolean advanced             = false;
+    private static int noRelevantDocs           = 1;
+    private static int noTermsToAdd             = 0;
+    private static String sourcefile;
 
     private static DecimalFormat df = new DecimalFormat("#.###");
-
 
 
     public static void main(String[] args) {
@@ -38,25 +40,92 @@ public class search {
 
         final long starttime = System.currentTimeMillis();
 
-        queryDocumentHandler = new QueryDocumentHandler();
+        QueryDocumentHandler queryDocumentHandler = new QueryDocumentHandler();
+        PriorityQueue<Accumulator> accumulators = new PriorityQueue<>();
+        Vector<String> termsToPrint = new Vector<>(queryTerms);
 
-        queryDocumentHandler.generateIndexDataFromFiles(lexicon, QueryDocumentHandler.fileType.LEXICON, queryTerms);
+        processQueriesToAccumulators(queryDocumentHandler, accumulators);
 
-        queryDocumentHandler.generateIndexDataFromFiles(map, QueryDocumentHandler.fileType.MAP, queryTerms);
+        if (advanced) {
+            advancedProcessing(queryDocumentHandler, accumulators);
+
+            // To reset the min heap
+            accumulators = new PriorityQueue<>();
+
+            processQueriesToAccumulators(queryDocumentHandler, accumulators);
+
+        }
+
+        printResults(starttime, termsToPrint, accumulators, queryDocumentHandler);
+
+    }
 
 
-        queryProcessing = new QueryProcessing(invlists, queryDocumentHandler.getLexicon(),
-                queryDocumentHandler.getMapping(), queryDocumentHandler.getAverageDocumentLength());
+    /**
+     * The process for advanced ranked retrieval
+     * @param queryDocumentHandler The query document handler
+     * @param accumulators The accumulators
+     */
+    private static void advancedProcessing (
+            QueryDocumentHandler queryDocumentHandler, PriorityQueue<Accumulator> accumulators
+    ) {
+
+        Map<Integer, Document> documentMap = new HashMap<>();
+        Map<Integer, Integer> offsets = new HashMap<>();
+        Map<Integer, MapMapping> documentMappings = queryDocumentHandler.getMapping();
+        DocumentFactory documentFactory = new DocumentFactory(documentMap);
+
+        for (int i = 0; i < noRelevantDocs && i < accumulators.size(); i++) {
+            int start = documentMappings.get(Objects.requireNonNull(accumulators.poll()).getDocumentID()).getDocumentLocationPointer();
+            int end = documentMappings.get(Objects.requireNonNull(accumulators.poll()).getDocumentID() + 1).getDocumentLocationPointer();
+
+            offsets.put(start, end);
+        }
+
+        DocumentHandler documentHandler = new DocumentHandler();
+        documentHandler.setCurrentFile(sourcefile);
+        documentHandler.setDocumentFactory(documentFactory);
+
+        int original = noTermsToAdd;
+
+        for (int l : offsets.keySet()) {
+//            if (noTermsToAdd <= 0) { break; }
+            for (Document d : documentHandler.readFile(l, offsets.get(l))) {
+//                if (noTermsToAdd <= 0) { break; }
+                for (String s : d.getAllText().split(" ")) {
+                    if (noTermsToAdd <= 0) {
+                        noTermsToAdd = original;
+                        break;
+                    }
+                    if (!queryTerms.contains(s)) {
+                        queryTerms.add(s);
+                        noTermsToAdd--;
+                    }
+                }
+            }
+        }
+    }
 
 
-        queryProcessing.accumulatorCycle(Arrays.copyOf(queryTerms.toArray(), queryTerms.size(), String[].class));
-
-        ArrayList<Accumulator> accumulators = queryProcessing.getTopNAccumulators(numResults);
-
+    /**
+     * Function to print the results
+     *
+     * @param starttime The time when the program started
+     * @param termsToPrint The initial terms in the query
+     * @param accumulators The accumulator scores
+     * @param queryDocumentHandler The query document handler
+     */
+    private static void printResults (
+            final long starttime, Vector<String> termsToPrint,
+            PriorityQueue<Accumulator> accumulators, QueryDocumentHandler queryDocumentHandler
+    ) {
 
         StringBuilder sb = new StringBuilder();
         int c = 1;
 
+        System.out.println("Your search Query");
+        for (String s : termsToPrint) { System.out.print(s + " "); }
+        System.out.println();
         for (Accumulator a : accumulators) {
             sb.append(((queryLabel != null) ? queryLabel + " " : ""));
             sb.append(queryDocumentHandler.getMapping().get(a.getDocumentID()).getDocumentNameID());
@@ -72,6 +141,46 @@ public class search {
         final long endtime = System.currentTimeMillis();
 
         System.out.println((endtime - starttime) + " ms");
+
+    }
+
+
+    /**
+     * A function for stopping the queries.
+     * @param queries
+     * @return
+     */
+    private static Vector<String> stop(Vector<String> queries) {
+        String[] queryArray = new String[queryTerms.size()];
+
+        DocumentHandler documentHandler = new DocumentHandler();
+        documentHandler.scanStopList(stopfile);
+        queryTerms.toArray(queryArray);
+        queryArray = documentHandler.stoppingFunction(new StringBuilder().append(String.join(" ", queryArray))).split(" ");
+        return new Vector<>(Arrays.asList(queryArray));
+    }
+
+
+    /**
+     * The function that runs the ranking of documents
+     * @param queryDocumentHandler The handler to process documents related to the search
+     * @param accumulators The min heap of the accumulators
+     */
+    private static void processQueriesToAccumulators (
+            QueryDocumentHandler queryDocumentHandler, PriorityQueue<Accumulator> accumulators) {
+
+        if (hasStoplist) queryTerms = stop(queryTerms);
+
+        queryDocumentHandler.generateIndexDataFromFiles(lexicon, QueryDocumentHandler.fileType.LEXICON, queryTerms);
+
+        queryDocumentHandler.generateIndexDataFromFiles(map, QueryDocumentHandler.fileType.MAP, queryTerms);
+
+        QueryProcessing queryProcessing = new QueryProcessing(invlists, queryDocumentHandler.getLexicon(),
+                queryDocumentHandler.getMapping(), queryDocumentHandler.getAverageDocumentLength());
+
+        queryProcessing.accumulatorCycle(Arrays.copyOf(queryTerms.toArray(), queryTerms.size(), String[].class));
+
+        accumulators.addAll(queryProcessing.getTopNAccumulators(numResults));
 
     }
 
@@ -171,6 +280,27 @@ public class search {
 
                 opsArray[i + 1] = true;
                 opsCount = opsCount + 2;
+
+            }//TODO add access to advanced feature lol
+            if (args[i].equals("-a") | args[i].equals("--advanced")) {
+
+                opsArray[i] = true;
+                advanced = true;
+
+
+                extOpsChecker(args, i);
+                extOpsChecker(args, i+1);
+
+                noRelevantDocs = Integer.parseInt(args[i + 1]);
+                noTermsToAdd = Integer.parseInt((args[i + 2]));
+                sourcefile = args[i+3];
+
+                opsArray[i + 1] = true;
+                opsArray[i + 2] = true;
+                opsArray[i + 3] = true;
+
+
+                opsCount = opsCount + 4;
 
             }
         }

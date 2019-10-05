@@ -1,16 +1,33 @@
 package queryingModule;
 
-public class BM25 {
+/**
+ * A Simple Okapi BM25 function implementation
+ */
+class BM25 {
 
-    private static double k1 = 1.2;
-    private static double b = 0.75;
+    /**
+     * The similarity calculation
+     *
+     * @param numDocuments The number of documents in the collection
+     * @param freqOfDocWithTerm The number of documents that contain the term
+     * @param freqOfTermInDoc The frequency of the term in the document
+     * @param docLength The length of the document
+     * @param avgDocLength The average document length
+     * @return The calculated similarity score of the document to the query term using okapi BM25
+     */
+    static double calculateSimilarity(double numDocuments, double freqOfDocWithTerm,
+                                      double freqOfTermInDoc,
+                                      double docLength, double avgDocLength) {
+        /* The k1 weight */
+        double k1 = 1.2;
 
-    public static double calculateSimilarity(double numDocuments, double freqOfDocWithTerm,
-                                              double weight, double freqOfTermInDoc,
-                                              double docLength, double avgDocLength) {
+        /* The b weight */
+        double b = 0.75;
 
-        return  Math.log((numDocuments-freqOfDocWithTerm+0.5)/freqOfDocWithTerm+0.5) *
-                (((k1+1)*freqOfTermInDoc)/((k1*((1-b)+((b*docLength)/avgDocLength)))+freqOfTermInDoc));
+        return  Math.log(
+                    (numDocuments-freqOfDocWithTerm+0.5)/freqOfDocWithTerm+0.5
+                ) *
+                (((k1 +1)*freqOfTermInDoc)/((k1 *((1- b)+((b *docLength)/avgDocLength)))+freqOfTermInDoc));
 
     }
 

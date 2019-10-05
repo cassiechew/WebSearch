@@ -15,15 +15,18 @@ public class Document {
     private String textData;
 
     private int documentLength;
+    private long documentLocationInFileByLine;
 
 
-    public Document (String documentNo, int documentID, String headline, String textData, int documentWeight, DocumentFactory documentFactory) {
+    public Document (String documentNo, int documentID, String headline, String textData, int documentWeight,
+                     long documentLocationInFileByLine, DocumentFactory documentFactory) {
         super();
         this.documentNo = documentNo;
         this.documentID = documentID;
         this.headline = headline;
         this.textData = textData;
         this.documentLength = documentWeight;
+        this.documentLocationInFileByLine = documentLocationInFileByLine;
         documentFactory.registerDocument(documentID, this);
     }
 
@@ -45,6 +48,12 @@ public class Document {
     }
 
     public int getDocumentLength() { return documentLength; }
+
+    public String getAllText() { return headline + " " + textData; }
+
+    public long getDocumentLocationInFileByLine() {
+        return documentLocationInFileByLine;
+    }
 
     /**
      * Prints the document

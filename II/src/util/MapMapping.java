@@ -2,32 +2,30 @@ package util;
 
 import java.util.Vector;
 
+
+/**
+ * Contains relevant information for mapping data and needed document data for the OKAPI BM25
+ */
 public class MapMapping {
 
     /** The name of the document in its raw ID */
     private String documentNameID;
 
-    /** The number of documents that contain this term */
-    //private Vector<Double> docWeights;
-
-    private static String[] queryTerms;
+    /** The weight of the document being the length of the document */
     private int documentWeight;
 
+    /** The line number of where the document begins */
+    private int documentLocationPointer;
 
 
-    public MapMapping(String documentNameID, int documentWeight) {
+    public MapMapping(String documentNameID, int documentWeight, int documentLocationPointer) {
         this.documentNameID = documentNameID;
         this.documentWeight = documentWeight;
-        //this.docWeights = new Vector<>();
-
+        this.documentLocationPointer = documentLocationPointer;
     }
 
-    public static void setQueryTerms(String[] queryTerms) {
-        MapMapping.queryTerms = queryTerms;
-    }
-
-    public void addTermWeight (double i) {
-        //this.docWeights.addElement(i);
+    public int getDocumentLocationPointer() {
+        return documentLocationPointer;
     }
 
     public String getDocumentNameID() {

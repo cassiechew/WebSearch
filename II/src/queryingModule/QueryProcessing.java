@@ -25,22 +25,26 @@ public class QueryProcessing {
     /** The internal mapping file */
     private HashMap<Integer, MapMapping> mapping;
 
+    /** The file of the inverted list document */
     private String invlist;
-
-    private Compressor compressor;
 
     public QueryProcessing (String invlist, HashMap<String, LexMapping> lexicon, HashMap<Integer, MapMapping> mapping, double averageDocLength) {
         this.accumulatorMinHeap = new PriorityQueue<>();
         this.accumulators = new HashMap<>();
-        this.compressor = new Compressor("none");
         this.invlist = invlist;
         this.lexicon = lexicon;
         this.mapping = mapping;
         this.averageDocLength = averageDocLength;
     }
 
-    public ArrayList<Accumulator> getTopNAccumulators(int n) {
-        ArrayList<Accumulator> output = new ArrayList<>();
+
+    /**
+     * Returns the number of accumulators needed to print as defined on user input
+     * @param n The number of terms to print
+     * @return A queue of accumulators to print
+     */
+    public PriorityQueue<Accumulator> getTopNAccumulators(int n) {
+        PriorityQueue<Accumulator> output = new PriorityQueue<>();
         accumulatorMinHeap.addAll(accumulators.values());
 
         int c = 0;
@@ -48,8 +52,8 @@ public class QueryProcessing {
             output.add(accumulatorMinHeap.poll());
             c++;
         }
+
         return output;
-        //System.out.print(accumulatorMinHeap.toString());
     }
 
     /**
@@ -90,19 +94,36 @@ public class QueryProcessing {
 
 
         if (!lexicon.containsKey(query)) {
-            System.out.println("This term does not exist in our documents!");
-            System.exit(1);
+            System.out.println("This term does not exist in our documents! " + query);
+            //System.exit(1);
+            return;
         }
 
         lexMapping = lexicon.get(query);
         noIntsToRead = 2 * lexMapping.getNoDocuments();
         intStore = new int[noIntsToRead];
 
+        processInvlistData(intStore, noIntsToRead, NOBYTES, invlist, lexMapping);
+        calculateAccumulators(intStore, lexMapping);
+
+    }
+
+
+    /**
+     * Parses the inverted list for data relating to the query term
+     *
+     * @param intStore The place to store the pulled data
+     * @param noIntsToRead The number of integers to read
+     * @param NOBYTES The size of the integers to read
+     * @param invlist The inverted list data
+     * @param lexMapping The lexicon mapping refer to util.LexMapping
+     * @throws IOException
+     */
+    private void processInvlistData (int[] intStore, int noIntsToRead, final int NOBYTES, RandomAccessFile invlist, LexMapping lexMapping)
+            throws IOException {
         invlist.seek(lexMapping.getOffset());
 
-        /**
-         * Parses the query to the inverted index
-         */
+
         for (int i = 0; i < noIntsToRead; i++) {
 
             //get docID and frequency
@@ -115,31 +136,33 @@ public class QueryProcessing {
             intStore[i] = output;
 
         }
+    }
 
-        /**
-         * Calculates the accumulators
-         */
+    /**
+     * Calculates the Accumulators for a term
+     *
+     * @param intStore The storage of the pulled ints from the invlist
+     * @param lexMapping The lexicon mapping refer to util.LexMapping
+     */
+    private void calculateAccumulators (int[] intStore, LexMapping lexMapping) {
+
         for (int i = 0; i < intStore.length; i += 2) {
             MapMapping mapMapping = mapping.get(intStore[i]);
             //if (!docFreqSwitch) {
-                if (!accumulators.containsKey(intStore[i])) {
+            if (!accumulators.containsKey(intStore[i])) {
 
-                    accumulators.put(intStore[i], new Accumulator(intStore[i], BM25.calculateSimilarity(mapping.size(), lexMapping.getNoDocuments(),
-                            mapMapping.getDocumentWeight(), intStore[i+1], mapMapping.getDocumentWeight(), averageDocLength)));
-                }
-                else {
-                    accumulators.get(intStore[i]).setPartialSimilarityScore(BM25.calculateSimilarity(mapping.size(), lexMapping.getNoDocuments(),
-                            mapMapping.getDocumentWeight(), intStore[i+1], mapMapping.getDocumentWeight(), averageDocLength));
-                }
+                accumulators.put(intStore[i], new Accumulator(intStore[i], BM25.calculateSimilarity(mapping.size(), lexMapping.getNoDocuments(),
+                        intStore[i+1], mapMapping.getDocumentWeight(), averageDocLength)));
+            }
+            else {
+                accumulators.get(intStore[i]).setPartialSimilarityScore(BM25.calculateSimilarity(mapping.size(), lexMapping.getNoDocuments(),
+                        intStore[i+1], mapMapping.getDocumentWeight(), averageDocLength));
+            }
         }
     }
 
 
 
-    public void calculateDocumentWeights () {
-        for (Integer i : mapping.keySet()) {
-            //mapping.get(i).addTermWeight(BM25.calculateWeight(documentCounter, ));
-        }
-    }
+
 
 }

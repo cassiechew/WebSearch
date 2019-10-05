@@ -40,9 +40,9 @@ public class DocumentFactory {
      * @param textData The text content of the document
      * @return The newy created document
      */
-    public Document createDocument (String documentNo, String heading, String textData) {
+    public Document createDocument (String documentNo, String heading, String textData, long documentLocationInFile) {
         int documentWeight = heading.length() + textData.length();
-        return new Document(documentNo, documentRegistry.size() , heading, textData, documentWeight, this);
+        return new Document(documentNo, documentRegistry.size() , heading, textData, documentWeight, documentLocationInFile, this);
     }
 
     /**
