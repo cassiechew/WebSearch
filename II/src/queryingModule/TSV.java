@@ -1,6 +1,8 @@
 package queryingModule;
 
+import util.Accumulator;
 import util.LexMapping;
+import util.TermSelectionValue;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -10,41 +12,45 @@ import java.util.Objects;
 
 public class TSV {
 
-    //TODO make new class to hold tsv results
-    public static double calculateRJSSimilarity () {
+    static double calculateRJSSimilarity(LexMapping lexMapping,
+                                         double numberOfDocumentsInCollection, double listOfDocumentPoolContainingT, double numberOfDocsInPool) {
 
+        double a = (listOfDocumentPoolContainingT+0.5);
+        double b = (numberOfDocumentsInCollection-lexMapping.getNoDocuments()-numberOfDocsInPool+listOfDocumentPoolContainingT+0.5);
+        double c = (lexMapping.getNoDocuments()-listOfDocumentPoolContainingT+0.5);
+        double d = (numberOfDocsInPool-listOfDocumentPoolContainingT+0.5);
+
+        double out = Math.log((a*b)/(c*d));
+//        System.out.println(">    " + out);
+//        System.out.println("$    " + a + " " + b + " " + c + " " + d);
+//        System.out.println("@    " + lexMapping.getNoDocuments() + " " + numberOfDocsInPool + " " + listOfDocumentPoolContainingT);
+
+//        System.out.println(lexMapping.getNoDocuments() + " " + numberOfDocumentsInCollection + " "+  listOfDocumentPoolContainingT + " " + numberOfDocsInPool);
+        //        System.out.println("<    " + returnVal);
+
+        return (out <= 0) ? 0 : out/3.0;
     }
 
-    public static double calculateTSV (
-            String query, HashMap<String, LexMapping> lexicon, RandomAccessFile invlist,
-            double numberOfDocumentsInCollection, List<Integer> listOfDocumentPoolContainingT)
-            throws IOException {
-        System.out.println(query);
+    public static TermSelectionValue calculateTSV (
+            String query, HashMap<String, LexMapping> lexicon,
+            double numberOfDocumentsInCollection, double listOfDocumentPoolContainingT, double numberOfDocsInPool) {
+
+
         LexMapping lexMapping = lexicon.get(query);
-        if(Objects.isNull(lexMapping)) return 0;
-        //System.out.println(lexMapping + " " + query);
-        int noIntsToRead = 2 * lexMapping.getNoDocuments();
-        int[] intStore = new int[noIntsToRead];
-        QueryProcessing.processInvlistData(intStore, noIntsToRead, 4, invlist,lexMapping);
+        if (lexMapping == null) return new TermSelectionValue(query, 0);
 
-        double frequencyOfTermInDocumentCollection = 0;
 
-        for (int i = 0; i < intStore.length; i+=2) {
-            if (listOfDocumentPoolContainingT.contains(intStore[i])) {
-                frequencyOfTermInDocumentCollection += 1;
-            }
-//            frequencyOfTermInDocumentCollection += intStore[i];
-        }
-
-        return Math.pow(lexMapping.getNoDocuments()/numberOfDocumentsInCollection, frequencyOfTermInDocumentCollection)*
-                (factorialCalculation(listOfDocumentPoolContainingT.size())
+        double TSV = Math.pow(lexMapping.getNoDocuments() / numberOfDocumentsInCollection, listOfDocumentPoolContainingT) *
+                (factorialCalculation(numberOfDocsInPool)
                         /
-                        (factorialCalculation(frequencyOfTermInDocumentCollection)*factorialCalculation(listOfDocumentPoolContainingT.size()-frequencyOfTermInDocumentCollection)));
+                        (factorialCalculation(listOfDocumentPoolContainingT) *
+                                factorialCalculation(numberOfDocsInPool - listOfDocumentPoolContainingT)));
 
+        return new TermSelectionValue(query, TSV);
     }
 
 
-    public static double factorialCalculation (double n) {
+    private static double factorialCalculation(double n) {
 
         if (n <= 0) return 1;
         return factorialCalculation(n-1)*n;

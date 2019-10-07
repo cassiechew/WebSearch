@@ -42,8 +42,8 @@ public class DocumentHandler {
     private long documentLocationInFile = 0;
 
 
-    private boolean readHeader = false;
-    private boolean readText = false;
+    private boolean readHeader;
+    private boolean readText;
 
 
     public void setCurrentFile(String fileName) {
@@ -56,6 +56,8 @@ public class DocumentHandler {
 
 
     public DocumentHandler() {
+        readHeader = false;
+        readText = false;
         currentDocumentCount = 0;
         hasStopFile = false;
     }
@@ -115,8 +117,9 @@ public class DocumentHandler {
             this.documentLocationInFile = reader.getLineNumber();
 
             while ((buffer = reader.readLine()) != null) {
-                if (reader.getLineNumber() == endingOffset) break;
-                if (reader.getLineNumber() < startingOffset) continue;
+                if (reader.getLineNumber() == (endingOffset + 1)) break;
+                if (reader.getLineNumber() <= startingOffset) continue;
+                //System.out.println(buffer);
                 documentProcessor(documentList, buffer, reader);
 
             }
@@ -136,6 +139,7 @@ public class DocumentHandler {
 
         /* This checks if the document has ended and will generate a document object */
         if (buffer.equals(SwitchTags.CLOSEDOC.getText())) {
+
             documentList.add(this.documentFactory.createDocument(
                     documentNo.toString(),
                     (hasStopFile) ? stoppingFunction(header) : header.toString(),
@@ -172,7 +176,6 @@ public class DocumentHandler {
                 return;
             }
             if (readHeader) {
-
                 header.append(processString(buffer));
             } else {
 
@@ -207,17 +210,15 @@ public class DocumentHandler {
      * @param buffer The block of text to process
      * @return The processed block of text
      */
-    private String processString(String buffer) {
+    public String processString(String buffer) {
         return buffer
                 .toLowerCase().replaceAll("n't", " not")
                 .replaceAll("'re", " are").replaceAll("'m", " am")
                 .replaceAll("'ll", " will").replaceAll("'ve", " have")
                 .replaceAll("'s", "")
-                .replaceAll("(?!,)\\p{Punct}", " ").replaceAll("(?<!\\S)\\p{Punct}+|\\p{Punct}+(?!\\S)", " ");
-        //.replaceAll("-|;|/|\\(|=|:", " ");
-
-        //.replaceAll("'s", "")//.replaceAll("(?<=\\w{3})\\.(?=\\w{3})", " ")
-        //
+                .replaceAll("(?!,)\\p{Punct}", " ")
+                .replaceAll("(?<!\\S)\\p{Punct}+|\\p{Punct}+(?!\\S)", " ")
+                .replaceAll(" {2}", " ");
     }
 
 
@@ -298,7 +299,6 @@ public class DocumentHandler {
 
         for (int i = 0; i < textArray.length; i++) {
 
-            //hash = hashString(textArray[i]);
 
             if (this.stoplistHashtable.containsKey(textArray[i])) {
                 textArray[i] = "";
@@ -307,7 +307,6 @@ public class DocumentHandler {
 
 
         return String.join(" ", textArray).replaceAll("\\s+", " ");
-        //.replaceAll("^\\s+|$\\s+", "");
     }
 
     /**

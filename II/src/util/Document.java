@@ -56,7 +56,7 @@ public class Document {
     }
 
     public String getAllText() {
-        return headline + " " + textData;
+        return String.join(headline, textData);
     }
 
     public long getDocumentLocationInFileByLine() {

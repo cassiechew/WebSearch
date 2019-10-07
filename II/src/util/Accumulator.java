@@ -11,10 +11,6 @@ public class Accumulator implements Comparable {
      */
     private int documentID;
 
-    /**
-     * The term for the Term selection value
-     */
-    private String queryTerm;
 
     /**
      * The similarity score calculated using Okapi BM 25
@@ -26,14 +22,7 @@ public class Accumulator implements Comparable {
         this.partialSimilarityScore = partialSimilarityScore;
     }
 
-    public Accumulator(String queryTerm, double partialSimilarityScore) {
-        this.queryTerm = queryTerm;
-        this.partialSimilarityScore = partialSimilarityScore;
-    }
 
-    public String getQueryTerm() {
-        return queryTerm;
-    }
 
     public void setPartialSimilarityScore(double partialSimilarityScore) {
         this.partialSimilarityScore += partialSimilarityScore;

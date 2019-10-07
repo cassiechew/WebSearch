@@ -44,20 +44,22 @@ Usage: java search  -BM25 -q <query-label> -n <num-results> -l <lexicon> -i <inv
             -m <map> -a <noDocsToAdd> <noTermsToAdd> [-s <stoplist>] <queryterm-1> [<queryterm-2> ...  <queryterm-N>]
 
 
-  -BM25 specifies that the BM25 similarity function is to be used.
-  -q <query-label> is an integer that identifies the current query. For example, you might indicate that the current
-        query label is “1133”. This item is only used for output formatting (see below).
-  -n <num-results> is an integer number specifying the number of top-ranked doc- uments that should be returned as
-        an answer.
-  -l <lexicon> is the inverted index lexicon file
-  -i <invlists> is the inverted list file
-  -m <map> is the mapping table from internal document numbers to actual document identifiers.
-  -s <stoplist> is an optional argument which may indicate a stoplist;
-        note that if the inverted index was created with stopping, then queries should be stopped in exactly the
-        same way.
+  -BM25                 Specifies that the BM25 similarity function is to be used.
+  -q <query-label>      An integer that identifies the current query. For example, you might indicate that the current
+                            query label is “1133”. This item is only used for output formatting (see below).
+  -n <num-results>      An integer number specifying the number of top-ranked doc- uments that should be returned as
+                            an answer.
+  -l <lexicon>          The inverted index lexicon file
+  -i <invlists>         The inverted list file
+  -m <map>              The mapping table from internal document numbers to actual document identifiers.
+  -s <stoplist>         An optional argument which may indicate a stoplist;
+                            note that if the inverted index was created with stopping, then queries should be stopped in exactly the
+                            same way.
+
   -a <noDocsToAdd=1> <noTermsToAdd> <documentSourceFile> is to flag for advanced search features. The first two arguments
         should be numbers, noDocsToAdd shoule be less than or equal to num-results, and the sourcefile should be the
-        original document file used in indexing.
+        original document file used in indexing. Automatic query expansion.
+
   <queryterm-1> [<queryterm-2> ... <queryterm-N>] are a variable number of query terms (but at least one query term)
         that the program will receive as command- line arguments. Each of these terms should be looked up in the
         lexicon, and the appropriate inverted list data fetched from the inverted list file.

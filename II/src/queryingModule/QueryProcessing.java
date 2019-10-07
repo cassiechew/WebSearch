@@ -1,9 +1,6 @@
 package queryingModule;
 
-import util.Accumulator;
-import util.Compressor;
-import util.LexMapping;
-import util.MapMapping;
+import util.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,9 +10,14 @@ import java.util.*;
 
 public class QueryProcessing {
 
+    /**
+     * The minheap of accumulators to return to the main search program
+     */
     private PriorityQueue<Accumulator> accumulatorMinHeap;
 
     private HashMap<Integer, Accumulator> accumulators;
+
+    private Vector<String> queries;
 
     private double averageDocLength;
 
@@ -41,6 +43,7 @@ public class QueryProcessing {
         this.lexicon = lexicon;
         this.mapping = mapping;
         this.averageDocLength = averageDocLength;
+        this.queries = new Vector<>();
     }
 
 
@@ -55,9 +58,11 @@ public class QueryProcessing {
         accumulatorMinHeap.addAll(accumulators.values());
 
         int c = 0;
+
         if (n == 0) return accumulatorMinHeap;
 
-        while (c < n && (accumulatorMinHeap.size() > 0)) {
+        while ((c < n) && (accumulatorMinHeap.size() > 0)) {
+            System.out.println("afklhjkhlfdd");
             output.add(accumulatorMinHeap.poll());
             c++;
         }
@@ -67,19 +72,18 @@ public class QueryProcessing {
 
     /**
      * Umbrella method for generating accumulators.
-     *
-     * TODO: Adda parameter to flag when to use okapi or the robert jones spark
-     *
+     **
      * @param queryTerms The terms for the query
      */
-    public void accumulatorCycle(String[] queryTerms, boolean okapi) {
+    public void accumulatorCycle(String[] queryTerms, Map<String, List<Document>> potentialQueries, double numberOfDocsInPool) {
         this.accumulators = new HashMap<>();
         try (
                 RandomAccessFile invlist = new RandomAccessFile(new File(this.invlist), "r");
         ) {
 
             for (String query : queryTerms) {
-                generateAccumulators(query, invlist, okapi);
+                //System.out.println(query);
+                generateAccumulators(query, invlist, potentialQueries, numberOfDocsInPool);
             }
 
         } catch (IOException e) {
@@ -95,7 +99,9 @@ public class QueryProcessing {
      * @param query The query term
      * @param invlist The inverted list file
      */
-    private void generateAccumulators(String query, RandomAccessFile invlist, boolean okapi) throws IOException {
+    private void generateAccumulators(
+            String query, RandomAccessFile invlist, Map<String, List<Document>> potentialQueries,
+            double numberOfDocsInPool) throws IOException {
 
         final int NOBYTES = 4;
 
@@ -104,7 +110,7 @@ public class QueryProcessing {
         int[] intStore;
         int noIntsToRead;
 
-        boolean docFreqSwitch = false;
+//        boolean docFreqSwitch = false;
 
 
         if (!lexicon.containsKey(query)) {
@@ -118,7 +124,15 @@ public class QueryProcessing {
         intStore = new int[noIntsToRead];
 
         processInvlistData(intStore, noIntsToRead, NOBYTES, invlist, lexMapping);
-        calculateAccumulators(intStore, lexMapping, okapi);
+
+
+
+        if (this.queries.contains(query)) {
+            calculateAccumulators(intStore, lexMapping, true, potentialQueries, numberOfDocsInPool, query);
+        }
+        else {
+            calculateAccumulators(intStore, lexMapping, false, potentialQueries, numberOfDocsInPool, query);
+        }
 
     }
 
@@ -133,11 +147,11 @@ public class QueryProcessing {
      * @param lexMapping   The lexicon mapping refer to util.LexMapping
      * @throws IOException Throws an IOException
      */
-    static void processInvlistData(int[] intStore, int noIntsToRead, final int NOBYTES, RandomAccessFile invlist, LexMapping lexMapping)
+    private static void processInvlistData(int[] intStore, int noIntsToRead, final int NOBYTES, RandomAccessFile invlist, LexMapping lexMapping)
             throws IOException {
         invlist.seek(lexMapping.getOffset());
 
-
+        int pointer = 0;
         for (int i = 0; i < noIntsToRead; i++) {
 
             //get docID and frequency
@@ -147,8 +161,19 @@ public class QueryProcessing {
             //convert byte array to bytebuffer
             ByteBuffer wrapped = ByteBuffer.wrap(docIDFrequency);
             int output = wrapped.getInt();
-            intStore[i] = output;
+            intStore[i] = (i % 2 == 0) ? output + pointer : output;
+            pointer += (i % 2 == 0) ? output : 0;
 
+        }
+    }
+
+
+
+    public void setQueries(Vector<String> queries) {
+        //            System.out.println("VVV   " + s);
+        //this.queries.addAll(queries);
+        for (String s : queries) {
+            this.queries.add(s.toLowerCase());
         }
     }
 
@@ -158,19 +183,37 @@ public class QueryProcessing {
      * @param intStore   The storage of the pulled ints from the invlist
      * @param lexMapping The lexicon mapping refer to util.LexMapping
      */
-    private void calculateAccumulators(int[] intStore, LexMapping lexMapping, boolean okapi) {
+    private void calculateAccumulators(int[] intStore, LexMapping lexMapping, boolean okapi, Map<String, List<Document>> potentialQueries, double numberOfDocsInPool, String query) {
 
         for (int i = 0; i < intStore.length; i += 2) {
             MapMapping mapMapping = mapping.get(intStore[i]);
+//            System.out.println(intStore[i]);
             //if (!docFreqSwitch) {
+//            System.out.println("%%%  " + query);
             if (!accumulators.containsKey(intStore[i])) {
 
-                accumulators.put(intStore[i], new Accumulator(intStore[i],
-                        (okapi) ? BM25.calculateSimilarity(mapping.size(), lexMapping.getNoDocuments(),
-                        intStore[i + 1], mapMapping.getDocumentWeight(), averageDocLength) : 0));
+                accumulators.put(intStore[i], new Accumulator(intStore[i], (okapi) ?
+                        BM25.calculateSimilarity(mapping.size(), lexMapping.getNoDocuments(), intStore[i + 1], mapMapping.getDocumentWeight(), averageDocLength)
+                        :
+                        TSV.calculateRJSSimilarity(lexMapping, mapping.size(), potentialQueries.get(query).size(), numberOfDocsInPool)));
+//                if (intStore[i] == 7) System.out.println(query + " LOL " + accumulators.get(intStore[i]).getPartialSimilarityScore() + " " + okapi);
+
             } else {
-                accumulators.get(intStore[i]).setPartialSimilarityScore(BM25.calculateSimilarity(mapping.size(), lexMapping.getNoDocuments(),
-                        intStore[i + 1], mapMapping.getDocumentWeight(), averageDocLength));
+                Accumulator accumulator = accumulators.get(intStore[i]);
+//                System.out.println(accumulator.getPartialSimilarityScore());
+
+//                if (intStore[i] == 7) System.out.println(query + " BEFORE " + accumulators.get(intStore[i]).getPartialSimilarityScore() + " " + okapi);
+
+
+                double similarityScore = (okapi) ?
+                        BM25.calculateSimilarity(mapping.size(), lexMapping.getNoDocuments(), intStore[i + 1], mapMapping.getDocumentWeight(), averageDocLength)
+                        :
+                        TSV.calculateRJSSimilarity(lexMapping, mapping.size(), potentialQueries.get(query).size(), numberOfDocsInPool);
+
+                //if (!okapi) System.out.println(query + " " + similarityScore + " " + okapi + " " + lexMapping.getNoDocuments() + " " + mapping.size() + " " + potentialQueries.get(query).size() + " " + numberOfDocsInPool);
+
+                accumulator.setPartialSimilarityScore(similarityScore);
+//                if (intStore[i] == 7)  System.out.println(query + " AFTER  " + accumulators.get(intStore[i]).getPartialSimilarityScore() + " " + okapi);
             }
         }
     }
