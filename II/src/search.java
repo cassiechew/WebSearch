@@ -4,10 +4,6 @@ import queryingModule.QueryProcessing;
 import queryingModule.TSV;
 import util.*;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.*;
 import java.text.DecimalFormat;
 
@@ -51,31 +47,31 @@ public class search {
         QueryDocumentHandler queryDocumentHandler = new QueryDocumentHandler();
         PriorityQueue<Accumulator> accumulators = new PriorityQueue<>();
         PriorityQueue<TermSelectionValue> queryCandidates = new PriorityQueue<>();
+        List<Accumulator> listOfDocumentsContainingT;
+        Map<String, List<Document>> potentialQueries;
         termsToPrint = new Vector<>(queryTerms);
-
-
 
 
         processQueriesToAccumulators(queryDocumentHandler, accumulators, 0, null, 0);
         if (advanced) {
-            // Reset the query terms
 
-            List<Accumulator> listOfDocumentsContainingT = new Vector<>();
-            Map<String, List<Document>> potentialQueries = new HashMap<>();
+            // Reset the query terms
+            listOfDocumentsContainingT = new Vector<>();
+            potentialQueries = new HashMap<>();
 
             int noDocsInPool = accumulators.size();
 
 
             queryTerms.addAll(advancedProcessing(queryDocumentHandler, accumulators, queryCandidates, listOfDocumentsContainingT, potentialQueries));
 
-            // To reset the min heap
+//          To reset the min heap
             accumulators = new PriorityQueue<>();
 
-            processQueriesToAccumulators(queryDocumentHandler, queryProcessing.getTopNAccumulators(numResults), numResults, potentialQueries, noDocsInPool);
+            processQueriesToAccumulators(queryDocumentHandler, accumulators, numResults, potentialQueries, noDocsInPool);
 
         }
 
-        printResults(starttime, termsToPrint, accumulators, queryDocumentHandler);
+        printResults(starttime, termsToPrint, queryProcessing.getTopNAccumulators(numResults), queryDocumentHandler);
 
     }
 
@@ -155,8 +151,8 @@ public class search {
 
         for (int i = 0; i < noTermsToAdd; i++) {
             TermSelectionValue termSelectionValue = Objects.requireNonNull(queryCandidates.poll());
-            String intert = termSelectionValue.getName();
-            out.add(intert);
+            String insert = termSelectionValue.getName();
+            out.add(insert);
         }
         return out;
 
@@ -184,8 +180,8 @@ public class search {
             System.out.print(s + " ");
         }
         System.out.println();
-
-        for (int i = 0; i < numResults; i++) {
+        System.out.println(numResults + " " + accumulators.size());
+        for (int i = 0; i < numResults && i < accumulators.size(); i++) {
             Accumulator a = Objects.requireNonNull(accumulators.poll());
             sb.append(((queryLabel != null) ? queryLabel + " " : ""));
             sb.append(queryDocumentHandler.getMapping().get(a.getDocumentID()).getDocumentNameID());
@@ -204,29 +200,6 @@ public class search {
     }
 
 
-    /**
-     * A function for stopping the queries.
-     *
-     * @param queries The queries to run the stop function
-     * @return The query to stop
-     */
-    private static Vector<String> stop(Vector<String> queries) {
-        String[] queryArray = new String[queries.size()];
-
-        DocumentHandler documentHandler = new DocumentHandler();
-
-        Vector<String> out = new Vector<>();
-        for (String s : queries) {
-            out.add(documentHandler.processString(s));
-        }
-
-        documentHandler.scanStopList(stopfile);
-        out.toArray(queryArray);
-        queryArray = documentHandler.stoppingFunction(new StringBuilder().append(String.join(" ", queryArray))).split(" ");
-        new Vector<>(Arrays.asList(queryArray));
-        out.remove("");
-        return out;
-    }
 
 
     /**
@@ -243,20 +216,18 @@ public class search {
             double numberOfDocsInPool
     ) {
 
-
-
-        if (hasStoplist) queryTerms = stop(queryTerms);
+        if (hasStoplist) queryTerms = QueryProcessing.stop(queryTerms, stopfile);
         if (queryTerms.size() == 0) {
             System.out.println("You have not inserted a term that fits with the stoplist!");
             System.exit(1);
         }
 
-        if (firstPass) {
+//        if (firstPass) {
             queryDocumentHandler.generateIndexDataFromFiles(lexicon, QueryDocumentHandler.fileType.LEXICON);
 
             queryDocumentHandler.generateIndexDataFromFiles(map, QueryDocumentHandler.fileType.MAP);
             firstPass = false;
-        }
+
 
         queryProcessing = new QueryProcessing(invlists, queryDocumentHandler.getLexicon(),
                 queryDocumentHandler.getMapping(), queryDocumentHandler.getAverageDocumentLength());
@@ -394,8 +365,6 @@ public class search {
         for (int i = 0; i < args.length; i++) {
 
             if (!opsArray[i]) {
-//                System.out.println("Q TERM FOUND");
-                //currentFile = args[i];
                 queryTerms.add(args[i]);
                 opsCount++;
             }

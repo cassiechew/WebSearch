@@ -1,15 +1,12 @@
 package queryingModule;
 
-import queryingModule.BM25;
 import util.LexMapping;
 import util.MapMapping;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Vector;
 
 import static queryingModule.QueryDocumentHandler.fileType.MAP;
 

@@ -1,5 +1,6 @@
 package queryingModule;
 
+import indexingModule.DocumentHandler;
 import util.*;
 
 import java.io.File;
@@ -15,10 +16,19 @@ public class QueryProcessing {
      */
     private PriorityQueue<Accumulator> accumulatorMinHeap;
 
+    /**
+     * The map of accumulators to document IDs
+     */
     private HashMap<Integer, Accumulator> accumulators;
 
+    /**
+     * The original queries
+     */
     private Vector<String> queries;
 
+    /**
+     * The average document length
+     */
     private double averageDocLength;
 
     /**
@@ -48,6 +58,30 @@ public class QueryProcessing {
 
 
     /**
+     * A function for stopping the queries.
+     *
+     * @param queries The queries to run the stop function
+     * @return The query to stop
+     */
+    public static Vector<String> stop(Vector<String> queries, String stopfile) {
+        String[] queryArray = new String[queries.size()];
+
+        DocumentHandler documentHandler = new DocumentHandler();
+        Vector<String> out = new Vector<>();
+
+        for (String s : queries) { out.add(documentHandler.processString(s)); }
+
+        documentHandler.scanStopList(stopfile);
+        out.toArray(queryArray);
+        queryArray = documentHandler.stoppingFunction(new StringBuilder().append(String.join(" ", queryArray))).split(" ");
+        out = new Vector<>(Arrays.asList(queryArray));
+        out.remove("");
+        return out;
+    }
+
+
+
+    /**
      * Returns the number of accumulators needed to print as defined on user input
      *
      * @param n The number of terms to print
@@ -62,7 +96,6 @@ public class QueryProcessing {
         if (n == 0) return accumulatorMinHeap;
 
         while ((c < n) && (accumulatorMinHeap.size() > 0)) {
-            System.out.println("afklhjkhlfdd");
             output.add(accumulatorMinHeap.poll());
             c++;
         }
@@ -82,15 +115,12 @@ public class QueryProcessing {
         ) {
 
             for (String query : queryTerms) {
-                //System.out.println(query);
                 generateAccumulators(query, invlist, potentialQueries, numberOfDocsInPool);
             }
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
 
     /**
@@ -110,9 +140,6 @@ public class QueryProcessing {
         int[] intStore;
         int noIntsToRead;
 
-//        boolean docFreqSwitch = false;
-
-
         if (!lexicon.containsKey(query)) {
             System.out.println("This term does not exist in our documents! " + query);
             //System.exit(1);
@@ -125,15 +152,12 @@ public class QueryProcessing {
 
         processInvlistData(intStore, noIntsToRead, NOBYTES, invlist, lexMapping);
 
-
-
         if (this.queries.contains(query)) {
             calculateAccumulators(intStore, lexMapping, true, potentialQueries, numberOfDocsInPool, query);
         }
         else {
             calculateAccumulators(intStore, lexMapping, false, potentialQueries, numberOfDocsInPool, query);
         }
-
     }
 
 
@@ -170,8 +194,6 @@ public class QueryProcessing {
 
 
     public void setQueries(Vector<String> queries) {
-        //            System.out.println("VVV   " + s);
-        //this.queries.addAll(queries);
         for (String s : queries) {
             this.queries.add(s.toLowerCase());
         }
@@ -187,33 +209,24 @@ public class QueryProcessing {
 
         for (int i = 0; i < intStore.length; i += 2) {
             MapMapping mapMapping = mapping.get(intStore[i]);
-//            System.out.println(intStore[i]);
-            //if (!docFreqSwitch) {
-//            System.out.println("%%%  " + query);
+
             if (!accumulators.containsKey(intStore[i])) {
 
                 accumulators.put(intStore[i], new Accumulator(intStore[i], (okapi) ?
                         BM25.calculateSimilarity(mapping.size(), lexMapping.getNoDocuments(), intStore[i + 1], mapMapping.getDocumentWeight(), averageDocLength)
                         :
-                        TSV.calculateRJSSimilarity(lexMapping, mapping.size(), potentialQueries.get(query).size(), numberOfDocsInPool)));
-//                if (intStore[i] == 7) System.out.println(query + " LOL " + accumulators.get(intStore[i]).getPartialSimilarityScore() + " " + okapi);
+                        RSJ.calculateRJSSimilarity(lexMapping, mapping.size(), potentialQueries.get(query).size(), numberOfDocsInPool)));
 
             } else {
                 Accumulator accumulator = accumulators.get(intStore[i]);
-//                System.out.println(accumulator.getPartialSimilarityScore());
-
-//                if (intStore[i] == 7) System.out.println(query + " BEFORE " + accumulators.get(intStore[i]).getPartialSimilarityScore() + " " + okapi);
-
 
                 double similarityScore = (okapi) ?
                         BM25.calculateSimilarity(mapping.size(), lexMapping.getNoDocuments(), intStore[i + 1], mapMapping.getDocumentWeight(), averageDocLength)
                         :
-                        TSV.calculateRJSSimilarity(lexMapping, mapping.size(), potentialQueries.get(query).size(), numberOfDocsInPool);
+                        RSJ.calculateRJSSimilarity(lexMapping, mapping.size(), potentialQueries.get(query).size(), numberOfDocsInPool);
 
-                //if (!okapi) System.out.println(query + " " + similarityScore + " " + okapi + " " + lexMapping.getNoDocuments() + " " + mapping.size() + " " + potentialQueries.get(query).size() + " " + numberOfDocsInPool);
 
                 accumulator.setPartialSimilarityScore(similarityScore);
-//                if (intStore[i] == 7)  System.out.println(query + " AFTER  " + accumulators.get(intStore[i]).getPartialSimilarityScore() + " " + okapi);
             }
         }
     }
