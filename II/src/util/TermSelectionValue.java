@@ -1,10 +1,21 @@
 package util;
 
+
+/**
+ * This is a utility class that holds the term selection value for query terms
+ */
 public class TermSelectionValue implements Comparable{
 
+
+    /**
+     * The term selection value calculated the TSV class
+     */
     private double TSV;
 
 
+    /**
+     * The query term
+     */
     private String name;
 
 

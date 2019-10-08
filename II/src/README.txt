@@ -40,7 +40,7 @@ This file contains the code used to perform the compression. See report for more
 
 /* Ranked Search */
 
-Usage: java search  -BM25 -q <query-label> -n <num-results> -l <lexicon> -i <invlists>
+Usage: java Search  -BM25 -q <query-label> -n <num-results> -l <lexicon> -i <invlists>
             -m <map> -a <noDocsToAdd> <noTermsToAdd> [-s <stoplist>] <queryterm-1> [<queryterm-2> ...  <queryterm-N>]
 
 

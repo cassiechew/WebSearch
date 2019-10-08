@@ -4,6 +4,7 @@ import util.LexMapping;
 
 class RSJ {
 
+
     /**
      * Calculates the Robert-Sparck Jones similarity score for a document
      *
@@ -14,7 +15,9 @@ class RSJ {
      * @return The RJS Similarity score
      */
     static double calculateRJSSimilarity(LexMapping lexMapping,
-                                         double numberOfDocumentsInCollection, double listOfDocumentPoolContainingT, double numberOfDocsInPool) {
+                                         double numberOfDocumentsInCollection,
+                                         double listOfDocumentPoolContainingT,
+                                         double numberOfDocsInPool) {
 
         double a = (listOfDocumentPoolContainingT + 0.5);
         double b = (numberOfDocumentsInCollection - lexMapping.getNoDocuments() - numberOfDocsInPool + listOfDocumentPoolContainingT + 0.5);

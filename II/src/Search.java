@@ -7,7 +7,7 @@ import util.*;
 import java.util.*;
 import java.text.DecimalFormat;
 
-public class search {
+public class Search {
 
 
     private static boolean BM25 = false;
@@ -30,8 +30,6 @@ public class search {
     private static int noTermsToAdd = 1;
     private static String sourcefile;
 
-    private static boolean firstPass = true;
-
     private static Vector<String> termsToPrint;
 
     private static QueryProcessing queryProcessing;
@@ -49,30 +47,61 @@ public class search {
         PriorityQueue<TermSelectionValue> queryCandidates = new PriorityQueue<>();
         List<Accumulator> listOfDocumentsContainingT;
         Map<String, List<Document>> potentialQueries;
+
+        int noDocsInPool;
+
         termsToPrint = new Vector<>(queryTerms);
 
+        queryDocumentHandler.generateIndexDataFromFiles(lexicon, QueryDocumentHandler.fileType.LEXICON);
+        queryDocumentHandler.generateIndexDataFromFiles(map, QueryDocumentHandler.fileType.MAP);
 
-        processQueriesToAccumulators(queryDocumentHandler, accumulators, 0, null, 0);
+
+        queryProcessing = new QueryProcessing(invlists, queryDocumentHandler.getLexicon(),
+                queryDocumentHandler.getMapping(), queryDocumentHandler.getAverageDocumentLength());
+
+        runQueryProcessing(accumulators, null, 0, (advanced)?0:numResults);
+
         if (advanced) {
+
+            queryProcessing.clearCache();
 
             // Reset the query terms
             listOfDocumentsContainingT = new Vector<>();
             potentialQueries = new HashMap<>();
 
-            int noDocsInPool = accumulators.size();
-
+            noDocsInPool = accumulators.size();
 
             queryTerms.addAll(advancedProcessing(queryDocumentHandler, accumulators, queryCandidates, listOfDocumentsContainingT, potentialQueries));
 
-//          To reset the min heap
-            accumulators = new PriorityQueue<>();
+            // To reset the min heap
+            accumulators.clear();
 
-            processQueriesToAccumulators(queryDocumentHandler, accumulators, numResults, potentialQueries, noDocsInPool);
 
+            runQueryProcessing(accumulators, potentialQueries, noDocsInPool, numResults);
         }
 
         printResults(starttime, termsToPrint, queryProcessing.getTopNAccumulators(numResults), queryDocumentHandler);
 
+    }
+
+
+    /**
+     * Function to run the query processing for ranked retrieval
+     *
+     * @param accumulators         The heap of accumulators
+     * @param potentialQueries     The map of potential queries
+     * @param noDocsInPool         The number of documents in the pool
+     */
+    private static void runQueryProcessing(
+            PriorityQueue<Accumulator> accumulators,
+            Map<String, List<Document>> potentialQueries,
+            int noDocsInPool, int numDocsToGet
+    ) {
+
+        QueryProcessing.processQueriesToAccumulators(
+                accumulators, numDocsToGet, potentialQueries, noDocsInPool,
+                hasStoplist, queryTerms, stopfile, queryProcessing, termsToPrint
+        );
     }
 
 
@@ -96,66 +125,45 @@ public class search {
         DocumentHandler documentHandler = new DocumentHandler();
         DocumentFactory documentFactory = new DocumentFactory(documentMap);
 
-        int noDocsInPool = accumulators.size();
+        List<Document> documentsOfPool = new Vector<>();
 
-        for (int i = 0; i < noRelevantDocs && i < accumulators.size(); i++) {
-            Accumulator accumulator = accumulators.poll();
-
-            assert accumulator != null;
-            listOfDocumentsContainingT.add(accumulator);
-
-            int start = documentMappings.get(Objects.requireNonNull(accumulator).getDocumentID()).getDocumentLocationPointer();
-            int end = documentMappings.get(Objects.requireNonNull(accumulator).getDocumentID() + 1).getDocumentLocationPointer();
-
-            offsets.put(start, end);
-        }
+        int noDocsInPool;
 
         documentHandler.setCurrentFile(sourcefile);
         documentHandler.setDocumentFactory(documentFactory);
 
-        List<Document> documentsOfPool = new Vector<>();
+        noDocsInPool = accumulators.size();
 
-        for (int l : offsets.keySet()) {
-            List<Document> docs = documentHandler.readFile(l, offsets.get(l));
-            documentsOfPool.addAll(docs);
-        }
+        queryDocumentHandler.getDocumentOffsets(accumulators, listOfDocumentsContainingT, documentMappings, offsets, noRelevantDocs);
 
-        for (Document d : documentsOfPool) {
-            String[] words = d.getAllText().split(" ");
-            for (String s : words) {
-                if (!potentialQueries.containsKey(s)) {
-                    Vector<Document> docList = new Vector<>();
-                    docList.add(d);
-                    potentialQueries.put(s, docList);
-                } else {
-                    if (!potentialQueries.get(s).contains(d)) {
-                        potentialQueries.get(s).add(d);
-                    }
-                }
-            }
-        }
+        queryDocumentHandler.getDocumentsOfPool(offsets, documentHandler, documentsOfPool);
 
-        for (String s : potentialQueries.keySet()) {
-            queryCandidates.add(
-                    TSV.calculateTSV(
-                            s,
-                            queryDocumentHandler.getLexicon(),
-                            documentMappings.size(),
-                            potentialQueries.get(s).size(),
-                            noDocsInPool)
-            );
-        }
+        queryDocumentHandler.processDocuments(documentsOfPool, potentialQueries);
 
+        TSV.calculateTSVs(potentialQueries, queryCandidates, queryDocumentHandler, documentMappings, noDocsInPool);
+
+        return getNewQueryTerms(queryCandidates);
+
+    }
+
+
+    /**
+     * Gets the new query terms from the candidates
+     *
+     * @param queryCandidates The candidates of queries
+     * @return A list of the new queries to add
+     */
+    private static List<String> getNewQueryTerms(PriorityQueue<TermSelectionValue> queryCandidates) {
 
         List<String> out = new Vector<>();
 
-        for (int i = 0; i < noTermsToAdd; i++) {
+        for (int i = 0; (i < noTermsToAdd); i++) {
             TermSelectionValue termSelectionValue = Objects.requireNonNull(queryCandidates.poll());
             String insert = termSelectionValue.getName();
             out.add(insert);
         }
-        return out;
 
+        return out;
     }
 
 
@@ -180,8 +188,8 @@ public class search {
             System.out.print(s + " ");
         }
         System.out.println();
-        System.out.println(numResults + " " + accumulators.size());
-        for (int i = 0; i < numResults && i < accumulators.size(); i++) {
+//        System.out.println(numResults + " " + accumulators.size());
+        for (int i = 0; (i < numResults) && (0 < accumulators.size()); i++) {
             Accumulator a = Objects.requireNonNull(accumulators.poll());
             sb.append(((queryLabel != null) ? queryLabel + " " : ""));
             sb.append(queryDocumentHandler.getMapping().get(a.getDocumentID()).getDocumentNameID());
@@ -191,6 +199,7 @@ public class search {
             sb.append(df.format(a.getPartialSimilarityScore()));
             System.out.println(sb.toString());
             sb.setLength(0);
+//            System.out.println(c + " " + (i<numResults) + " " + i + " " + numResults + " " + (i<accumulators.size()) + " " + accumulators.size());
             c++;
         }
 
@@ -199,46 +208,6 @@ public class search {
         System.out.println((endtime - starttime) + " ms");
     }
 
-
-
-
-    /**
-     * The function that runs the ranking of documents
-     *
-     * @param queryDocumentHandler The handler to process documents related to the search
-     * @param accumulators         The min heap of the accumulators
-     */
-    private static void processQueriesToAccumulators(
-            QueryDocumentHandler queryDocumentHandler,
-            PriorityQueue<Accumulator> accumulators,
-            int numResultsToGet,
-            Map<String, List<Document>> potentialQueries,
-            double numberOfDocsInPool
-    ) {
-
-        if (hasStoplist) queryTerms = QueryProcessing.stop(queryTerms, stopfile);
-        if (queryTerms.size() == 0) {
-            System.out.println("You have not inserted a term that fits with the stoplist!");
-            System.exit(1);
-        }
-
-//        if (firstPass) {
-            queryDocumentHandler.generateIndexDataFromFiles(lexicon, QueryDocumentHandler.fileType.LEXICON);
-
-            queryDocumentHandler.generateIndexDataFromFiles(map, QueryDocumentHandler.fileType.MAP);
-            firstPass = false;
-
-
-        queryProcessing = new QueryProcessing(invlists, queryDocumentHandler.getLexicon(),
-                queryDocumentHandler.getMapping(), queryDocumentHandler.getAverageDocumentLength());
-
-        queryProcessing.setQueries(termsToPrint);
-
-        queryProcessing.accumulatorCycle(Arrays.copyOf(queryTerms.toArray(), queryTerms.size(), String[].class), potentialQueries, numberOfDocsInPool);
-
-        accumulators.addAll(queryProcessing.getTopNAccumulators(numResultsToGet));
-
-    }
 
     /**
      * Exits the program after a failure
@@ -345,9 +314,10 @@ public class search {
                 opsArray[i] = true;
                 advanced = true;
 
-
                 extOpsChecker(args, i);
                 extOpsChecker(args, i + 1);
+                extOpsChecker(args, i + 2);
+
 
                 noRelevantDocs = Integer.parseInt(args[i + 1]);
                 noTermsToAdd = Integer.parseInt((args[i + 2]));

@@ -63,13 +63,15 @@ public class QueryProcessing {
      * @param queries The queries to run the stop function
      * @return The query to stop
      */
-    public static Vector<String> stop(Vector<String> queries, String stopfile) {
+    private static Vector<String> stop(Vector<String> queries, String stopfile) {
         String[] queryArray = new String[queries.size()];
 
         DocumentHandler documentHandler = new DocumentHandler();
         Vector<String> out = new Vector<>();
 
-        for (String s : queries) { out.add(documentHandler.processString(s)); }
+        for (String s : queries) {
+            out.add(documentHandler.processString(s));
+        }
 
         documentHandler.scanStopList(stopfile);
         out.toArray(queryArray);
@@ -78,7 +80,6 @@ public class QueryProcessing {
         out.remove("");
         return out;
     }
-
 
 
     /**
@@ -93,7 +94,9 @@ public class QueryProcessing {
 
         int c = 0;
 
-        if (n == 0) return accumulatorMinHeap;
+        if (n == 0) {
+            return accumulatorMinHeap;
+        }
 
         while ((c < n) && (accumulatorMinHeap.size() > 0)) {
             output.add(accumulatorMinHeap.poll());
@@ -103,12 +106,51 @@ public class QueryProcessing {
         return output;
     }
 
+
+    public void clearCache () {
+        this.accumulatorMinHeap.clear();
+        this.accumulators.clear();
+    }
+
+    /**
+     * The function that runs the ranking of documents
+     *
+     * @param accumulators    The min heap of the accumulators
+     * @param hasStoplist     Is there a stop list
+     * @param queryTerms      The query terms to process
+     * @param stopfile        The stopfile to read
+     * @param queryProcessing The Query processing module
+     * @param termsToPrint    The terms to pring
+     */
+    public static void processQueriesToAccumulators(
+            PriorityQueue<Accumulator> accumulators,
+            int numResultsToGet,
+            Map<String, List<Document>> potentialQueries,
+            double numberOfDocsInPool,
+            boolean hasStoplist, Vector<String> queryTerms, String stopfile, QueryProcessing queryProcessing, Vector<String> termsToPrint) {
+
+        if (hasStoplist) queryTerms = QueryProcessing.stop(queryTerms, stopfile);
+        if (queryTerms.size() == 0) {
+            System.out.println("You have not inserted a term that fits with the stoplist!");
+            System.exit(1);
+        }
+
+        queryProcessing.setQueries(termsToPrint);
+
+        queryProcessing.accumulatorCycle(Arrays.copyOf(queryTerms.toArray(), queryTerms.size(), String[].class), potentialQueries, numberOfDocsInPool);
+
+        accumulators.addAll(queryProcessing.getTopNAccumulators(numResultsToGet));
+
+    }
+
+
     /**
      * Umbrella method for generating accumulators.
-     **
+     *
+     *
      * @param queryTerms The terms for the query
      */
-    public void accumulatorCycle(String[] queryTerms, Map<String, List<Document>> potentialQueries, double numberOfDocsInPool) {
+    private void accumulatorCycle(String[] queryTerms, Map<String, List<Document>> potentialQueries, double numberOfDocsInPool) {
         this.accumulators = new HashMap<>();
         try (
                 RandomAccessFile invlist = new RandomAccessFile(new File(this.invlist), "r");
@@ -126,7 +168,7 @@ public class QueryProcessing {
     /**
      * Generates accumulators for a single query term
      *
-     * @param query The query term
+     * @param query   The query term
      * @param invlist The inverted list file
      */
     private void generateAccumulators(
@@ -154,8 +196,7 @@ public class QueryProcessing {
 
         if (this.queries.contains(query)) {
             calculateAccumulators(intStore, lexMapping, true, potentialQueries, numberOfDocsInPool, query);
-        }
-        else {
+        } else {
             calculateAccumulators(intStore, lexMapping, false, potentialQueries, numberOfDocsInPool, query);
         }
     }
@@ -192,8 +233,7 @@ public class QueryProcessing {
     }
 
 
-
-    public void setQueries(Vector<String> queries) {
+    private void setQueries(Vector<String> queries) {
         for (String s : queries) {
             this.queries.add(s.toLowerCase());
         }
